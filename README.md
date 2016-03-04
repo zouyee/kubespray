@@ -28,7 +28,7 @@ in order to avoid any issue during deployment you should disable your firewall
 * [etcd](https://github.com/coreos/etcd/releases) v2.2.5
 * [calicoctl](https://github.com/projectcalico/calico-docker/releases) v0.17.0
 * [flanneld](https://github.com/coreos/flannel/releases) v0.5.5
-* [weave](http://weave.works/) v1.4.4
+* [weave](http://weave.works/) v1.4.5
 * [docker](https://www.docker.com/) v1.9
 
 Quickstart

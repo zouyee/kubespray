@@ -1,0 +1,20 @@
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 3m
+  group_interval: 5m
+  repeat_interval: 5m
+  receiver: "test-webhook"
+
+receivers:
+- name: 'test-mails'
+  email_configs:
+  - to: 'm15600567980@163.com'
+    from: 'm15600567980@163.com'
+    smarthost: "smtp.163.com:25"
+    auth_username: "m15600567980@163.com"
+    auth_password: "404508549"
+    require_tls: true
+- name: 'test-webhook'
+  webhook_configs:
+  - url: 'http://{{hostvars[groups['alertmanager'][0]]['ip']}}:9093/api/v1/monitor'
+    send_resolved: true

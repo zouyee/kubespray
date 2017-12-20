@@ -1,0 +1,116 @@
+---
+- name: Fluent | Write kafka host info to fluent node
+  blockinfile:
+      dest: /etc/hosts
+      block: |
+        {{hostvars[item]['ip']}}    {{item}}
+      marker: "# kafka node"
+  with_items: "{{groups['kafka']}}"
+
+- name: Fluent | Ensure paas images dir
+  file:
+      path: "{{paas_images_dir}}"
+      state: directory
+      mode: 0755
+
+- name: Fluent | Copy fluent docker images
+  local_action: "shell rsync -avz -e 'sshpass -p {{ ansible_password }} ssh -p 22 -o StrictHostKeyChecking=no' {{ playbook_dir }}/tar/fluent/k8s-fluentd.tar  {{ ansible_user }}@{{inventory_hostname}}:{{ paas_images_dir }}/k8s-fluentd.tar"
+
+#- name: Fluent | Copy fluent docker images
+#  local_action: "shell rsync -avz -e 'sshpass -p {{ ansible_password }} ssh -p 22 -o StrictHostKeyChecking=no' {{ role_path }}/files/k8s-fluentd.tar  {{ ansible_user }}@{{inventory_hostname}}:{{ paas_images_dir }}/k8s-fluentd.tar"
+
+#- name: Fluent | Copy fluent docker images
+#  copy:
+#      src: k8s-fluentd.tar
+#      dest: "{{ paas_images_dir }}"
+#      mode: 0755
+
+- name: Fluent | Load fluent images
+  shell: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/k8s-fluentd.tar"
+
+- name: Fluent | Ensure fluent conf file exist
+  file:
+    path: /etc/fluent/conf
+    state: directory
+    mode: 0755
+
+- name: Fluent | Get fluent and es node ip
+  set_fact:
+      fluent_nodes: "{{ groups['kafka'] }}"
+      es_nodes: "{{ groups['es'] }}"
+
+- name: Fluent | Write fluent conf
+  template:
+      src: fluent.conf.j2
+      dest: "{{fluent_conf_dir}}/fluent.conf"
+      mode: 0644
+
+- name: Fluent | Write fluent daemonset yaml
+  copy:
+      src: fluent-daemonset.yml
+      dest: "{{kube_config_dir}}/fluent-daemonset.yml"
+      mode: 0644
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: Fluent | Check if fluent daemonset exists
+  command: "{{ bin_dir }}/kubectl get ds fluentd-k8s -n {{system_namespace}}"
+  register: 'fluentdk8sds'
+  changed_when: False
+  failed_when: False
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: Fluent | Start fluent daemonset service
+  kube:
+      name: "fluentd-k8s"
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{kube_config_dir}}/fluent-daemonset.yml"
+      namespace: "{{ system_namespace }}"
+  when: fluentdk8sds|failed and inventory_hostname == groups['kube-master'][0]
+
+- name: Fluent | Write fluent-lb daemonset
+  template:
+      src: fluent-lb.yml.j2
+      dest: "{{fluent_conf_dir}}/fluent-lb.yml"
+      mode: 0644
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: Fluent | label fluent-lb node
+  shell: "{{bin_dir}}/kubectl label node --overwrite {{groups['ingress'][0]}} fluentd-lb-daemonset=true "
+  when: inventory_hostname == groups['kube-master'][0]
+
+
+- name: Fluent | Write fluent configmap
+  template:
+      src: lblog_conf.yml.j2
+      dest: "{{fluent_conf_dir}}/lblog_conf.yml"
+      mode: 0644
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: Fluent | Start fluent config service
+  kube:
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{fluent_conf_dir}}/lblog_conf.yml"
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: Fluent | Start fluent nginx daemonset service
+  kube:
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{fluent_conf_dir}}/fluent-lb.yml"
+  when: inventory_hostname == groups['kube-master'][0]
+
+
+
+- name: Fluent | Write lblog json
+  copy:
+      src: lblog.json
+      dest: "{{kube_config_dir}}/lblog.json"
+      mode: 0644
+  when: inventory_hostname == groups['es'][0]
+
+- name: Fluent | put lblog json
+  shell: "curl -XPUT {{hostvars[groups['es'][0]]['ip']}}:9200/_template/lblog -d@{{kube_config_dir}}/lblog.json"
+  register: task_result
+  until: task_result.rc == 0
+  retries: 10
+  delay: 1
+  delegate_to: "{{hostvars[groups['es'][0]]['ip']}}"

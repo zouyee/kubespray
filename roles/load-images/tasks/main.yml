@@ -1,0 +1,53 @@
+- name: Copy rsync
+  copy:
+      src: "./yum/"
+      dest: "/root/"
+      mode: 755
+- name: install rsync
+  shell: "yum localinstall -y /root/rsync-3.0.9-17.el7.x86_64.rpm"
+
+- name: Ensure k8s_images_dir exist
+  file:
+      path: "{{ k8s_images_dir }}"
+      state: directory
+
+- name: Ensure k8s_images_dir/sshpass exist
+  file:
+      path: "{{ k8s_images_dir }}/ssh"
+      state: directory
+
+- name: copy ssh
+  copy:
+      src: "{{ playbook_dir }}/tar/load-images/ssh/"
+      dest: "{{ k8s_images_dir }}/ssh/"
+      mode: 755
+
+#- name: install python-docker-py
+#  shell: "yum install -y python-docker-py"
+
+- name: install ssh
+  shell: "yum localinstall -y {{ k8s_images_dir }}/ssh/*.rpm"
+
+- name: Ensure the images tar exist
+  local_action: "shell rsync -avz -e 'sshpass -p {{ ansible_password }} ssh -p 22 -o StrictHostKeyChecking=no' {{ playbook_dir }}/tar/load-images/kargo_images.tar.gz {{ ansible_user }}@{{inventory_hostname}}:{{ k8s_images_dir }}/kargo_images.tar.gz"
+
+#- name: Ensure the images tar exist
+#  local_action: "shell rsync -avz -e 'sshpass -p {{ ansible_password }} ssh -p 22 -o StrictHostKeyChecking=no' {{ role_path }}/files/kargo_images.tar.gz {{ ansible_user }}@{{inventory_hostname}}:{{ k8s_images_dir }}/kargo_images.tar.gz"
+
+- name: Unarchive images
+  shell: "tar -xzvf {{ k8s_images_dir }}/kargo_images.tar.gz -C {{ k8s_images_dir }}"
+
+- name: List images tar
+  shell: ls "{{ k8s_images_dir }}/{{ kargo_images }}"
+  register: tars
+
+- name: Load k8s images
+  command: "{{ docker_bin_dir}}/docker load -i {{ k8s_images_dir }}/{{ kargo_images }}/{{ item }}"
+  with_items: "{{ tars.stdout_lines }}"
+
+- name: append harbor address to /etc/hosts
+  shell: "echo {{hostvars[groups['harbor'][0]]['ip']}} {{ harbor_address }} >> /etc/hosts"
+
+
+# - name: Remove the k8s_images_dir
+#   shell: "rm -rf /root/kargo_images/"

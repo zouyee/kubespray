@@ -1,0 +1,6 @@
+---
+
+- hosts: kube-node
+  roles:
+    - { role: kargo-defaults}
+    - { role: reset, tags: reset }

@@ -1,0 +1,79 @@
+---
+# - name: ELK | ensure java dir exists on zookeeper
+#   file:
+#       path: "{{java}}"
+#       state: directory
+#       mode: 0755
+#   when: not java_file
+#
+# - name: ELK | copy localrepo tar
+#   copy:
+#       src: java.tar.gz
+#       dest: "{{java}}"
+#       mode: 0755
+#   when:  not java_file
+#
+# - name: ELK | unarchive localrepo
+#   shell: "tar -zxvf {{java}}/java.tar.gz -C {{java}}"
+#   when:  not java_file
+#
+# - name: ELK | install java jdk
+#   shell: "rpm -ivh {{java}}/java/*.rpm"
+#   when:  not java_file
+#
+- name: ELK | ensure logstash dir exists
+  file:
+      path: "{{ logstash_dir }}"
+      state: directory
+      mode: 0755
+
+- name: ELK | copy logstash software
+  copy:
+      src: "{{ playbook_dir }}/tar/elk/logstash/logstash-2.3.3-1.noarch.rpm"
+      dest: "{{ logstash_dir }}"
+      mode: 0755
+
+- name: ELK | install logstash software
+  shell: "yum localinstall -y  {{logstash_dir}}/logstash-2.3.3-1.noarch.rpm"
+#  ignore_errors: yes
+
+- name: ELK | install logstash plugin step one
+  shell: " /opt/logstash/bin/logstash-plugin install --local --no-verify logstash-input-kafka"
+
+- name: ELK | install logstash plugin step two
+  shell: " /opt/logstash/bin/logstash-plugin install --local --no-verify logstash-output-elasticsearch"
+
+- name: ELK | ensure logstash patterns exists
+  file:
+      path: /etc/logstash/conf.d/patterns
+      state: directory
+      mode: 0755
+
+- name: ELK | copy logstash app log config
+  copy:
+      src: applog
+      dest: /etc/logstash/conf.d/patterns
+      mode: 0755
+
+- name: ELK | gen logstash conf
+  template:
+      src: logstash.conf.j2
+      dest: /etc/logstash/conf.d/logstash.conf
+      mode: 0755
+
+- name: ELK | ensure logstash log exists
+  file:
+      path: "{{ logstash_log_dir }}"
+      state: directory
+
+- name: ELK | update logstash init scrpit
+  template:
+      src: logstash.j2
+      dest: /etc/rc.d/init.d/logstash
+      mode: 0755
+
+- name: ELK | enable and start  logstash service
+  service:
+      name: logstash
+      enabled: yes
+      state: started

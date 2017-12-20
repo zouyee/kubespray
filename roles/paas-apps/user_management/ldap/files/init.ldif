@@ -1,0 +1,7 @@
+dn: ou=users,dc=cmss,dc=com
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=groups,dc=cmss,dc=com
+objectClass: top
+objectClass: organizationalUnit

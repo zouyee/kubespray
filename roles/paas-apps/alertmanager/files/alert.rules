@@ -1,0 +1,8 @@
+ALERT test
+IF sum(rate(container_cpu_usage_seconds_total{pod_name=~"test-lk.+",job="kubernetes-node",namespace="default"}[1m])) by (pod_name, namespace) >= 0
+FOR 5m
+LABELS { severity = 'warning' }
+ANNOTATIONS {
+    summary = 'test:app:cpus:sum:>=0:5m:warning:test-lk#default#admin',
+    description = 'test:app:cpus:sum:>=0:5m:warning:test-lk#default#admin',
+}

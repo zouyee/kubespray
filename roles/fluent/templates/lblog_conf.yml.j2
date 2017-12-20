@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    namespace: kube-system
+    name: lblog-config
+data:
+    fluent.conf: |
+        <source>
+           @type tail
+           path /dcos/lblog/*/access.log
+           tag access.*
+           pos_file /dcos/lblog/fluentd.pos
+           format json
+           time_key time_field
+           refresh_interval 2
+        </source>
+        <filter access.**>
+            @type grep
+            <exclude>
+              key uri
+              pattern ^/nginx_status/format/json$
+            </exclude>
+        </filter>
+        <filter access.**>
+           @type record_transformer
+           enable_ruby
+           <record>
+              cluster cluster-1
+              timestamp ${ (Time.now.to_f * 1000).to_i }
+              namespace ${tag_parts[-3].split('_')[0]}
+              lbname ${tag_parts[-3].split('_')[1]}
+              appname ${record["service"].sub((tag_parts[-3].split('_')[0]+"-"),"").sub("-"+record["service"].split('-')[-1],"")}
+              target ${record["target"].split(':')[0]}
+           </record>
+        </filter>
+        <filter access.**>
+          @type record_transformer
+          remove_keys service
+        </filter>
+        <match access.**>
+          @type elasticsearch
+          hosts {% for item in es_nodes %}{% if not loop.last %}{{hostvars[item]['ip']}}:9200,{% else %}{{hostvars[item]['ip']}}:9200{{ "\n" }}{% endif %}{% endfor %}
+          flush_interval 5s
+          logstash_format true
+          logstash_prefix lblog
+          logstash_dateformat %Y.%m
+          type_name lblog
+          remove_keys @timestamp
+        </match>

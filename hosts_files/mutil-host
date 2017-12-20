@@ -1,0 +1,77 @@
+# ## Configure 'ip' variable to bind kubernetes services on a
+# ## different ip than the default iface
+k8sm1 ansible_ssh_host=10.132.46.121    ip=10.132.46.121
+k8sm2 ansible_ssh_host=10.132.46.122    ip=10.132.46.122
+k8sm3 ansible_ssh_host=10.132.46.123    ip=10.132.46.123
+k8sn1 ansible_ssh_host=10.132.46.124    ip=10.132.46.124
+k8sn2 ansible_ssh_host=10.132.46.125    ip=10.132.46.125
+k8sn3 ansible_ssh_host=10.132.46.126    ip=10.132.46.126
+harbor ansible_ssh_host=10.132.46.127    ip=10.132.46.127
+elk1 ansible_ssh_host=10.132.46.128    ip=10.132.46.128
+elk2 ansible_ssh_host=10.132.46.130    ip=10.132.46.130
+elk3 ansible_ssh_host=10.132.46.131    ip=10.132.46.131
+
+[kube-master]
+k8sm1
+k8sm2
+k8sm3
+
+[etcd]
+k8sm1
+k8sm2
+k8sm3
+
+[zookeeper]
+elk1
+elk2
+elk3
+
+[kafka]
+elk1
+elk2
+elk3
+
+[es]
+elk1
+elk2
+elk3
+
+[logstash]
+elk1
+elk2
+elk3
+
+[ingress]
+k8sn3
+
+[dashboard]
+k8sn1
+
+[alertmanager]
+k8sm3
+
+[user_management]
+k8sn1
+
+[openresty]
+k8sn1
+
+[harbor]
+harbor
+
+[resource-management]
+k8sn1
+
+[web-ssh]
+k8sm2
+
+[kube-node]
+k8sn1
+k8sn2
+k8sn3
+
+[k8s-cluster:children]
+kube-node
+kube-master
+
+#[calico-rr]

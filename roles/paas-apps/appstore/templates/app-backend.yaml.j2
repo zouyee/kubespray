@@ -1,0 +1,83 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: app-backend
+  name: app-backend
+  namespace: kube-system
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: app-backend
+    spec:
+      containers:
+      - image: app-backend:1.1.0
+        imagePullPolicy: Never
+        name: app-backend
+        ports:
+        - name: app-backend
+          containerPort: 8000
+        volumeMounts:
+        - name: helm
+          mountPath: /root/.helm
+        - name: app-backend
+          mountPath: /go/src/appstore/conf
+      volumes:
+      - name: helm
+        hostPath:
+          path: /root/.helm
+      - name: app-backend
+        configMap:
+          name: app-backend
+          items:
+          - key: appstore.conf
+            path: appstore.conf
+          - key: app.conf
+            path: app.conf
+      nodeSelector:
+        kubernetes.io/hostname: {{groups['appstore'][0]}}
+      nodeName: {{ groups['appstore'][0] }}
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: app-backend
+  namespace: kube-system
+data:
+  appstore.conf: |
+    [helm]
+    tiller_namespace=kube-system
+    tiller_serviceName=tiller-deploy
+    tiller_address={{ hostvars[groups['appstore'][0]]['ip'] }}
+    tiller_port=32134
+    repo_file=/root/.helm/repository/repositories.yaml
+    cache_directory=/root/.helm/repository/cache
+    cache_timeout=10
+  app.conf: |
+    appname = appstore
+    httpport = 8000
+    runmode = dev
+    autorender = false
+    copyrequestbody = true
+    EnableDocs = true
+
+    include "appstore.conf"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-backend
+  namespace: kube-system
+spec:
+  type: NodePort
+  ports:
+  - name: app-backend
+    port: 8002
+    protocol: TCP
+    targetPort: 8000
+    nodePort: 32136
+  selector:
+    app: app-backend

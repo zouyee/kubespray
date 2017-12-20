@@ -1,0 +1,6 @@
+dependencies:
+  - role: paas-apps/user_management/ldap
+  - role: paas-apps/user_management/mysql
+  - role: paas-apps/user_management/dex
+  - role: paas-apps/user_management/dex-app
+  - role: paas-apps/user_management/paas-auth

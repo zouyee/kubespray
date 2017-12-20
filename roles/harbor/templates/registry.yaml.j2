@@ -1,0 +1,75 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: registry
+  name: registry
+  namespace: kube-system
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: registry
+    spec:
+      containers:
+      - image: registry.paas/suyan/registry:0.0.4
+        name: registry
+        command: ["/usr/local/bin/registry", "serve", "/etc/registry/config.yaml"]
+        ports:
+        - name: registry
+          containerPort: 5558
+        volumeMounts:
+        - name: config
+          mountPath: /etc/registry
+      volumes:
+      - name: config
+        configMap:
+          name: registry
+          items:
+          - key: config.yaml
+            path: config.yaml
+      nodeSelector:
+        harbor: "true"
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: registry
+  namespace: kube-system
+data:
+  config.yaml: |
+    storage:
+      type: mysql
+      config:
+        host: mysql.kube-system.svc.cluster.local
+        port: "3306"
+        user: root
+        password: "123456"
+    backend:
+      host: {{hostvars[groups['kube-master'][0]]['ip']}}
+      port: "30499"
+    harbor:
+      host: {{hostvars[groups['harbor'][0]]['ip']}}
+      user: admin
+      password: 123456Dcos
+    listen: 0.0.0.0:5558
+    logger:
+      level: debug
+      format: json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+  namespace: kube-system
+spec:
+  type: NodePort
+  ports:
+  - name: registry
+    port: 5558
+    protocol: TCP
+    targetPort: 5558
+    nodePort: 32046
+  selector:
+    app: registry

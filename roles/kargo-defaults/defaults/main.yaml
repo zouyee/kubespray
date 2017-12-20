@@ -1,0 +1,282 @@
+## Required for bootstrap-os/preinstall/download roles and setting facts
+# Valid bootstrap options (required): ubuntu, coreos, centos, none
+bootstrap_os: centos
+kube_api_anonymous_auth: false
+
+## Change this to use another Kubernetes version, e.g. a current beta release
+kube_version: v1.8.2
+appstore_files_dir: /dcos/appstore
+# Directory where the binaries will be installed
+bin_dir: /usr/local/bin
+docker_bin_dir: /usr/bin
+etcd_data_dir: /var/lib/etcd
+calico_policy_image_tag: "v1.0.0"
+# Where the binaries will be downloaded.
+# Note: ensure that you've enough disk space (about 1G)
+local_release_dir: "/tmp/releases"
+# Random shifts for retrying failed ops like pushing/downloading
+retry_stagger: 5
+
+# DNS configuration.
+# Kubernetes cluster name, also will be used as DNS domain
+cluster_name: cluster.local
+# Subdomains of DNS domain to be resolved via /etc/resolv.conf for hostnet pods
+ndots: 2
+# Can be dnsmasq_kubedns, kubedns or none
+dns_mode: kubedns
+# Can be docker_dns, host_resolvconf or none
+resolvconf_mode: docker_dns
+# Deploy netchecker app to verify DNS resolve as an HTTP service
+deploy_netchecker: false
+skydns_server: "{{ kube_service_addresses|ipaddr('net')|ipaddr(3)|ipaddr('address') }}"
+dnsmasq_dns_server: "{{ kube_service_addresses|ipaddr('net')|ipaddr(2)|ipaddr('address') }}"
+dns_domain: "{{ cluster_name }}"
+
+# Kubernetes configuration dirs and system namespace.
+# Those are where all the additional config stuff goes
+# the kubernetes normally puts in /srv/kubernets.
+# This puts them in a sane location and namespace.
+# Editting those values will almost surely break something.
+kube_config_dir: /etc/kubernetes
+kube_script_dir: "{{ bin_dir }}/kubernetes-scripts"
+kube_manifest_dir: "{{ kube_config_dir }}/manifests"
+system_namespace: kube-system
+
+# Logging directory (sysvinit systems)
+kube_log_dir: "/var/log/kubernetes"
+
+# This is where all the cert scripts and certs will be located
+kube_cert_dir: "{{ kube_config_dir }}/ssl"
+
+# This is where all of the bearer tokens will be stored
+kube_token_dir: "{{ kube_config_dir }}/tokens"
+
+# This is where to save basic auth file
+kube_users_dir: "{{ kube_config_dir }}/users"
+
+
+# This is the group that the cert creation scripts chgrp the
+# cert files to. Not really changable...
+kube_cert_group: kube-cert
+
+# Cluster Loglevel configuration
+kube_log_level: 2
+
+kube_apiserver_insecure_bind_address: 127.0.0.1
+kube_apiserver_insecure_port: 8080
+
+ube_apiserver_insecure_endpoint: >-
+  http://{{ kube_apiserver_insecure_bind_address | regex_replace('0\.0\.0\.0','127.0.0.1') }}:{{ kube_apiserver_insecure_port }}
+# Users to create for basic auth in Kubernetes API via HTTP
+kube_api_pwd: "changeme"
+kube_users:
+  kube:
+    pass: "{{kube_api_pwd}}"
+    role: admin
+  root:
+    pass: "{{kube_api_pwd}}"
+    role: admin
+
+# Choose network plugin (calico, weave or flannel)
+# Can also be set to 'cloud', which lets the cloud provider setup appropriate routing
+kube_network_plugin: calico
+#
+calico_endpoint_to_host_action: "ACCEPT"
+
+# Kubernetes internal network for services, unused block of space.
+kube_service_addresses: 10.254.0.0/16
+
+# internal network. When used, it will assign IP
+# addresses from this range to individual pods.
+# This network must be unused in your network infrastructure!
+kube_pods_subnet: 10.222.64.0/18
+
+# internal network node size allocation (optional). This is the size allocated
+# to each node on your network.  With these defaults you should have
+# room for 4096 nodes with 254 pods per node.
+kube_network_node_prefix: 24
+authorization_modes: []
+rbac_enabled: "{{ 'RBAC' in authorization_modes }}"
+# The port the API Server will be listening on.
+kube_apiserver_ip: "{{ kube_service_addresses|ipaddr('net')|ipaddr(1)|ipaddr('address') }}"
+kube_apiserver_port: 6443 # (https)
+kube_apiserver_insecure_port: 8080 # (http)
+
+# Path used to store Docker data
+docker_daemon_graph: /dcos/docker
+
+# Harbor address
+harbor_address: registry.paas
+
+# Docker_storage_options
+docker_storage_options: "--storage-driver overlay2"
+docker_log_opts: "--log-opt max-size=50m --log-opt max-file=5"
+## A string of extra options to pass to the docker daemon.
+## This string should be exactly as you wish it to appear.
+## An obvious use case is allowing insecure-registry access
+## to self hosted registries like so:
+docker_options: "--insecure-registry={{ harbor_address }} --graph={{ docker_daemon_graph }} --mtu=1450 {{ docker_log_opts }}"
+
+# Settings for containerized control plane (etcd/kubelet/secrets)
+etcd_deployment_type: docker
+kubelet_deployment_type: docker
+cert_management: script
+vault_deployment_type: docker
+
+# K8s image pull policy (imagePullPolicy)
+k8s_image_pull_policy: IfNotPresent
+efk_enabled: false
+
+# Dcos platform docker images
+k8s_images_dir: /var/lib/k8s-images
+kargo_images: kargo_images
+
+# Paas images
+paas_images_dir: /dcos/paas-images
+
+# Enable network policy
+enable_network_policy: true
+
+## Internal loadbalancers for apiservers
+loadbalancer_apiserver_localhost: true
+
+# SecretName for dex
+secretName: 10.233.0.1.tls
+
+# Mysql password
+mysql_root_password: "123456"
+
+# LDAP password
+ldap_password: "123456"
+calico_policy_image_repo: "quay.io/calico/kube-controllers"
+# java jdk dir
+java: /dcos/java
+
+# kafka port
+kafka_port: 19092
+
+# zookeeper_port
+zookeeper_port: 2181
+
+# zookeeper_myid_parent_dir
+zookeeper_myid_parent_dir: /var/lib/zookeeper
+
+proxy_env:
+  http_proxy: "{{ http_proxy| default ('') }}"
+  https_proxy: "{{ https_proxy| default ('') }}"
+  no_proxy: "{{ no_proxy }}"
+
+# kafka_logs
+kafka_logs: /dcos/log/kafka-logs
+
+# logstash software dir
+logstash_dir: /dcos/logstash
+
+# logstash logs dir
+logstash_log_dir: /dcos/log/logstash
+
+# elasticsearch package dir
+es_dir: /dcos/es
+
+# es heap size
+es_heap_size: 6g
+
+# es startup sleep time
+es_startup_sleep_time: 5
+
+# es port
+es_port: 9200
+
+# es log dir
+es_log_dir: /dcos/log/elasticsearch
+
+# es lib dir
+es_lib_dir: /dcos/lib/elasticsearch
+
+# ingress dir
+ingress_dir: /dcos/ingress
+
+# openresty dir
+openresty_dir: /dcos/openresty
+
+# fluent dir
+fluent_dir: /etc/fluent
+
+# fluent conf dir
+fluent_conf_dir: /etc/fluent/conf
+
+# harbor files dir
+harbor_files_dir: /dcos/harbor
+
+#paas auth admin password
+paas_auth_pw: 123456Dcos
+
+
+k8s_image_pull_policy: IfNotPresent
+efk_enabled: false
+helm_enabled: false
+istio_enabled: false
+enable_network_policy: true
+
+
+## Set no_proxy to all assigned cluster IPs and hostnames
+no_proxy: >-
+  {%- if loadbalancer_apiserver is defined -%}
+  {{ apiserver_loadbalancer_domain_name| default('') }},
+  {{ loadbalancer_apiserver.address | default('') }},
+  {%- endif -%}
+  {%- for item in (groups['k8s-cluster'] + groups['etcd'] + groups['calico-rr']|default([]))|unique -%}
+  {{ hostvars[item]['access_ip'] | default(hostvars[item]['ip'] | default(hostvars[item]['ansible_default_ipv4']['address'])) }},
+  {%-   if (item != hostvars[item]['ansible_hostname']) -%}
+  {{ hostvars[item]['ansible_hostname'] }},
+  {{ hostvars[item]['ansible_hostname'] }}.{{ dns_domain }},
+  {%-   endif -%}
+  {{ item }},{{ item }}.{{ dns_domain }},
+  {%- endfor -%}
+  127.0.0.1,localhost
+
+proxy_env:
+  http_proxy: "{{ http_proxy| default ('') }}"
+  https_proxy: "{{ https_proxy| default ('') }}"
+  no_proxy: "{{ no_proxy }}"
+
+# Vars for pointing to kubernetes api endpoints
+is_kube_master: "{{ inventory_hostname in groups['kube-master'] }}"
+kube_apiserver_count: "{{ groups['kube-master'] | length }}"
+kube_apiserver_address: "{{ ip | default(ansible_default_ipv4['address']) }}"
+kube_apiserver_access_address: "{{ access_ip | default(kube_apiserver_address) }}"
+first_kube_master: "{{ hostvars[groups['kube-master'][0]]['access_ip'] | default(hostvars[groups['kube-master'][0]]['ip'] | default(hostvars[groups['kube-master'][0]]['ansible_default_ipv4']['address'])) }}"
+loadbalancer_apiserver_localhost: "{{ loadbalancer_apiserver is not defined }}"
+kube_apiserver_endpoint: |-
+  {% if not is_kube_master and loadbalancer_apiserver_localhost|default(true) -%}
+       https://localhost:{{ nginx_kube_apiserver_port|default(kube_apiserver_port) }}
+  {%- elif is_kube_master -%}
+       https://127.0.0.1:{{ kube_apiserver_port }}
+  {%- else -%}
+  {%-   if loadbalancer_apiserver is defined and loadbalancer_apiserver.port is defined -%}
+       https://{{ apiserver_loadbalancer_domain_name|default('lb-apiserver.kubernetes.local') }}:{{ loadbalancer_apiserver.port|default(kube_apiserver_port) }}
+  {%-   else -%}
+       https://{{ first_kube_master }}:{{ kube_apiserver_port }}
+  {%-  endif -%}
+  {%- endif %}
+kube_apiserver_insecure_endpoint: >-
+  http://{{ kube_apiserver_insecure_bind_address | regex_replace('0\.0\.0\.0','127.0.0.1') }}:{{ kube_apiserver_insecure_port }}
+
+# Vars for pointing to etcd endpoints
+is_etcd_master: "{{ inventory_hostname in groups['etcd'] }}"
+etcd_address: "{{ ip | default(ansible_default_ipv4['address']) }}"
+etcd_access_address: "{{ access_ip | default(etcd_address) }}"
+etcd_peer_url: "https://{{ etcd_access_address }}:2380"
+etcd_client_url: "https://{{ etcd_access_address }}:2379"
+etcd_access_addresses: |-
+  {% for item in groups['etcd'] -%}
+    https://{{ hostvars[item]['access_ip'] | default(hostvars[item]['ip'] | default(hostvars[item]['ansible_default_ipv4']['address'])) }}:2379{% if not loop.last %},{% endif %}
+  {%- endfor %}
+etcd_member_name: |-
+  {% for host in groups['etcd'] %}
+  {%   if inventory_hostname == host %}{{"etcd"+loop.index|string }}{% endif %}
+  {% endfor %}
+etcd_peer_addresses: |-
+  {% for item in groups['etcd'] -%}
+    {{ "etcd"+loop.index|string }}=https://{{ hostvars[item].access_ip | default(hostvars[item].ip | default(hostvars[item].ansible_default_ipv4['address'])) }}:2380{% if not loop.last %},{% endif %}
+  {%- endfor %}

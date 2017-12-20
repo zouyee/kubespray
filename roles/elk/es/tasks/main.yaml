@@ -1,0 +1,148 @@
+---
+#- name: ELK | ensure java dir exists on zookeeper
+#  file:
+#      path: "{{java}}"
+#      state: directory
+#      mode: 0755
+#  when: not java_file
+
+#- name: ELK | copy localrepo tar
+#  copy:
+#      src: java.tar.gz
+#      dest: "{{java}}"
+#      mode: 0755
+#  when:  not java_file
+
+#- name: ELK | unarchive localrepo
+#  shell: "tar -zxvf {{java}}/java.tar.gz -C {{java}}"
+#  when:  not java_file
+
+#- name: ELK | install java jdk
+#  shell: "rpm -ivh {{java}}/java/*.rpm"
+#  when:  not java_file
+
+- name: ELK | ensure es package dir exists
+  file:
+      path: "{{ es_dir }}"
+      state: directory
+      mode: 0755
+
+- name: ELK | copy es package
+  copy:
+      src: "{{ playbook_dir }}/tar/elk/es/elasticsearch-2.3.3.rpm"
+      dest: "{{ es_dir }}"
+      mode: 0755
+
+- name: ELK | copy es plugin package
+  copy:
+      src: "{{ playbook_dir }}/tar/elk/es/elasticsearch-head-master.zip"
+      dest: "{{ es_dir }}"
+      mode: 0755
+
+- name: ELK | copy es kube-template
+  copy:
+      src: kube-template.json
+      dest: "{{es_dir}}"
+      mode: 0755
+
+- name: ELK | copy es audit-template
+  copy:
+      src: audit-template.json
+      dest: "{{es_dir}}"
+      mode: 0755
+
+- name: ELK | copy application-template
+  copy:
+      src: application-template.json
+      dest: "{{es_dir}}"
+      mode: 0755
+
+- name: ELK | Write baselog configmap
+  template:
+      src: baselog_conf.yaml.j2
+      dest: "{{es_dir}}"
+      mode: 0644
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: ELK | Start baselog configmap
+  kube:
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{es_dir}}/baselog_conf.yaml"
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: ELK | install elasticsearch rpm
+  shell: "yum localinstall -y {{es_dir}}/elasticsearch-2.3.3.rpm"
+#  ignore_errors: yes
+
+- name: ELK | update elasticsearch yaml
+  template:
+      src: elasticsearch.yml.j2
+      dest: /etc/elasticsearch/elasticsearch.yml
+      mode: 0755
+
+- name: ELK | update elasticsearch sysconfig
+  template:
+      src: elasticsearch.j2
+      dest: /etc/sysconfig/elasticsearch
+      mode: 0755
+
+- name: ELK | check es log dir exists
+  file:
+      path: "{{es_log_dir}}"
+      state: directory
+      mode: 0755
+  when: es_log_dir is defined
+
+- name: ELK | check es lib dir exists
+  file:
+      path: "{{es_lib_dir}}"
+      state: directory
+      mode: 0755
+  when: es_lib_dir is defined
+
+- name: ELK | gen es service
+  template:
+      src: elasticsearch.service.j2
+      dest: /usr/lib/systemd/system
+      mode: 0644
+
+- name: ELK | check head plugin
+  shell: "/usr/share/elasticsearch/bin/plugin list |grep head"
+  register: 'esheadplugin'
+  changed_when: False
+  failed_when: False
+
+- name: ELK | install es plugin
+  shell: "/usr/share/elasticsearch/bin/plugin install file:{{es_dir}}/elasticsearch-head-master.zip"
+  when: esheadplugin.rc == 1
+#  ignore_errors: yes
+
+- name: ELK | chmod of es
+  shell: "chown -R elasticsearch.elasticsearch /usr/share/elasticsearch/plugins/"
+
+- name: ELK | enable es service
+  service: name=elasticsearch state=started enabled=yes
+
+- name: ELK | put kube-template json
+  shell: "curl -XPUT {{hostvars[groups['es'][0]]['ip']}}:9200/_template/k8s-kube -d@{{es_dir}}/kube-template.json"
+  register: task_result
+  until: task_result.rc == 0
+  retries: 10
+  delay: 1
+  delegate_to: "{{hostvars[groups['es'][0]]['ip']}}"
+
+- name: ELK | put audit-template.json
+  shell: "curl -XPUT {{hostvars[groups['es'][0]]['ip']}}:9200/_template/k8s-audit -d@{{es_dir}}/audit-template.json"
+  register: task_result
+  until: task_result.rc == 0
+  retries: 10
+  delay: 1
+  delegate_to: "{{hostvars[groups['es'][0]]['ip']}}"
+
+- name: ELK | put k8s-application.json
+  shell: "curl -XPUT {{hostvars[groups['es'][0]]['ip']}}:9200/_template/k8s-application -d@{{es_dir}}/application-template.json"
+  register: task_result
+  until: task_result.rc == 0
+  retries: 10
+  delay: 1
+  delegate_to: "{{hostvars[groups['es'][0]]['ip']}}"

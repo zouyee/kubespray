@@ -1,0 +1,20 @@
+---
+- name: Start web ssh service | copy executable file
+  copy:
+      src: "{{ playbook_dir }}/tar/paas-apps/web-ssh/web-ssh"
+      dest: /usr/local/bin
+      mode: 0755
+
+- name: Start web ssh service | copy service file
+  copy:
+      src: "{{ playbook_dir }}/tar/paas-apps/web-ssh/web-ssh.service"
+      dest: /etc/systemd/system
+      mode: 0755
+
+- name: "Start web ssh service | ensure  the web ssh service is started and enabled"
+  service:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+  with_items:
+      - web-ssh

@@ -1,0 +1,27 @@
+---
+- name: Kubernetes Data Collection | Wrtie grafana yaml
+  template:
+      src: grafana.yml.j2
+      dest: "{{kube_config_dir}}/grafana.yml"
+      mode: 0644
+
+- name: Kubernetes Data Collection | Check if monitoring-grafana svc exists
+  command: "{{ bin_dir }}/kubectl get svc monitoring-grafana -n {{system_namespace}}"
+  register: 'monitoringgrafanasvc'
+  changed_when: False
+  failed_when: False
+  
+- name: Kubernetes Data Collection | Check if monitoring-grafana deploy exists
+  command: "{{ bin_dir }}/kubectl get deploy monitoring-grafana -n {{system_namespace}}"
+  register: 'monitoringgrafanadeploy'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes Data Collection | Start grafana application
+  kube:
+      name: "monitoring-grafana"
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{kube_config_dir}}/grafana.yml"
+      namespace: "{{system_namespace}}"
+  when: monitoringgrafanasvc|failed and monitoringgrafanadeploy|failed 
+#  ignore_errors: yes

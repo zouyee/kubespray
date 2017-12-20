@@ -1,0 +1,98 @@
+---
+- name: Harbor | ensure docker running
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Harbor | label flueHarbornt node
+  shell: "{{bin_dir}}/kubectl label node {{groups['harbor'][0]}} harbor=true "
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: Harbor | ensure harbor files exists
+  file:
+      path: "{{harbor_files_dir}}"
+      state: directory
+      mode: 0755
+
+- name: Harbor | copy docker files
+  copy:
+      src: "{{ playbook_dir }}/tar/harbor/harbor"
+      dest: "{{harbor_files_dir}}"
+      mode: 0755
+
+- name: Harbor | copy docker compose
+  copy:
+      src: "{{ playbook_dir }}/tar/harbor/harbor/docker-compose"
+      dest: /usr/local/bin
+      mode: 0755
+
+- name: Harbor | register images files
+  shell: ls "{{ harbor_files_dir }}/harbor/harbor.v1.2.0.tar.gz"
+  register: harbor_images_files
+
+- name: Harbor | register images
+  shell: ls "{{ harbor_files_dir }}/harbor/registry-0.0.4.tar"
+  register: harbor_images_files
+
+- name: Harbor | load images
+  command: "{{docker_bin_dir}}/docker load -i {{item}}"
+  with_items: "{{harbor_images_files.stdout_lines}}"
+
+- name: Harbor | gen harbor cfg
+  template:
+      src: harbor.cfg.j2
+      dest: "{{harbor_files_dir}}/harbor/harbor.cfg"
+      mode: 0644
+
+- name: Harbor | install harbor
+  command: "/bin/bash {{harbor_files_dir}}/harbor/install.sh --with-clair"
+
+- name: Harbor | gen harbor service conf
+  template:
+      src: harbor.service.j2
+      dest: /usr/lib/systemd/system/harbor.service
+      mode: 0644
+- name: Harbor | copy clear.sql
+  copy:
+      src: "clear.sql"
+      dest: "{{harbor_files_dir}}/harbor/clear.sql"
+      mode: 0755
+- name: Harbor | copy vulnerability.sql
+  copy:
+      src: "clear.sql"
+      dest: "{{harbor_files_dir}}/harbor/vulnerability.sql"
+      mode: 0755
+
+- name: Harbor | put clear sql
+  shell: "docker exec -i clair-db psql -U postgres < {{harbor_files_dir}}/harbor/clear.sql"
+  register: task_result
+  until: task_result.rc == 0
+  retries: 10
+  delay: 1
+
+- name: Harbor | put vulnerability sql
+  shell: "docker exec -i clair-db psql -U postgres < {{harbor_files_dir}}/harbor/vulnerability.sql"
+  register: task_result
+  until: task_result.rc == 0
+  retries: 10
+  delay: 1
+
+- name: Harbor backend | copy registry.yml
+  template:
+    src: registry.yml.j2
+    dest: "{{kube_config_dir}}/registry.yml"
+    mode: 0644
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: Harbor backend | exec registry.yml
+  kube:
+    kubectl: "{{bin_dir}}/kubectl"
+    filename: "{{kube_config_dir}}/registry.yml"
+  when: inventory_hostname == groups['kube-master'][0]
+
+#- name: Harbo | daemon reload
+#  shell: "systemctl daemon-reload"
+#
+#- name: Harbor | restart harbor service
+#  shell: "systemctl restart harbor"

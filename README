@@ -1,0 +1,16 @@
+版本为集成所有组件的内容
+使用方法:
+1. 选择一台机器作为部署节点，导入ansible镜像 centos7-ansible-sshpaas.tar
+2. 将kargo上传到部署节点的/dcos/目录
+3. docker run -dit --name ansible -v /dcos/kargo:/dcos/kargo kirago/centos7-ansible-sshpaas:2.2.1
+4. docker exec -it ansible  bash
+5. 在容器内安装rsync: rpm -ihv yum/rsync-3.0.9-17.el7.x86_64.rpm
+6. 编辑容器/etc/hosts文件，填写k8s节点hostname和ip
+7. 部署 ansible-playbook -i inventory/hosts baseenv.yml -u root -vvvv
+8. 部署paas组件 ansible-playbook -i inventory/hosts apps-step{1,2,3}-deploy*.yml -u root -vvvv
+
+TODO:
+
+1. 修改harbor部署为harbor的高可用部署
+
+

@@ -1,0 +1,80 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: app-repo
+  name: app-repo
+  namespace: kube-system
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: app-repo
+    spec:
+      containers:
+      - image: nginx:1.13.5-alpine
+        imagePullPolicy: Never
+        name: app-repo
+        ports:
+        - name: app-repo
+          containerPort: 8003
+        volumeMounts:
+        - name: app-repo-charts
+          mountPath: /usr/share/nginx/charts
+        - name: app-repo-nginx
+          mountPath: /etc/nginx/conf.d
+      volumes:
+      - name: app-repo-charts
+        hostPath:
+          path: /dcos/appstore/app-repo/charts
+      - name: app-repo-nginx
+        configMap:
+          name: app-repo-nginx
+          items:
+          - key: default.conf
+            path: default.conf
+      nodeSelector:
+        kubernetes.io/hostname: {{groups['appstore'][0]}}
+      nodeName: {{ groups['appstore'][0] }}
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: app-repo-nginx
+  namespace: kube-system
+data:
+  default.conf: |
+    server {
+      listen       8003;
+      server_name  localhost;
+      location / {
+          root   /usr/share/nginx/charts/;
+          index  index.yaml index.yml;
+      }
+      location /charts {
+         root  /usr/share/nginx/;
+         index index.yaml index.yml;
+      }
+      error_page   500 502 503 504  /50x.html;
+      location = /50x.html {
+          root   /usr/share/nginx/html;
+      }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-repo
+  namespace: kube-system
+spec:
+  type: NodePort
+  ports:
+  - name: app-repo
+    port: 8003
+    protocol: TCP
+    targetPort: 8003
+    nodePort: 32135
+  selector:
+    app: app-repo

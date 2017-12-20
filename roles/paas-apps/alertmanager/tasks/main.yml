@@ -1,0 +1,100 @@
+---
+- name: Paas images | ensure paas images dir exists
+  file:
+      path: "{{paas_images_dir}}"
+      state: directory
+      mode: 0755
+  delegate_to: "{{ hostvars[groups['alertmanager'][0]]['ip']}}"
+#  ignore_errors: yes
+
+- name: Kubernetes alertmanager | find token file
+  shell: "find  /var/lib/kubelet/pods/ -name token | xargs ls -lrt|awk '{print $9}'|head -1"
+  register: token_file
+  delegate_to: "{{ hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | find ca file
+  shell: "find /var/lib/kubelet/pods/ -name ca.crt | xargs ls -lrt|awk '{print $9}'|head -1"
+  register: ca_file
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | copy token file
+  copy:
+      src: "{{token_file.stdout}}"
+      dest: /etc/kubernetes/ssl
+      remote_src: true
+      mode: 0644
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | copy ca file
+  copy:
+      src: "{{ca_file.stdout}}"
+      dest: /etc/kubernetes/ssl
+      remote_src: true
+      mode: 0644
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | mkdir alertmanager director
+  file:
+    path: /etc/alertmanager
+    state: directory
+    mode: 0755
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | Scp prometheus images
+  copy:
+      src: "{{ playbook_dir }}/tar/paas-apps/alertmanager/prom_prometheus_v1_4_1.tar"
+      dest: "{{paas_images_dir}}"
+      mode: 0755
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | load prometheus images
+  shell: "docker load -i {{paas_images_dir}}/prom_prometheus_v1_4_1.tar"
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+
+- name: Kubernetes alertmanager | copy alert rules file to alertmanager directory
+  copy:
+    src: alert.rules
+    dest: /etc/alertmanager/alert.rules
+    mode: 0644
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | copy alertmanager exectuable file to alertmanager directory
+  copy:
+    src: "{{ playbook_dir }}/tar/paas-apps/alertmanager/alertmanager"
+    dest: /etc/alertmanager
+    mode: 0755
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | copy config yaml file  to alertmanager directory
+  template:
+    src: config.yml.j2
+    dest: /etc/alertmanager/config.yml
+    mode: 0644
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | copy prometheus yaml file to alertmanager directory
+  copy:
+    src: prometheus.yml
+    dest: /etc/alertmanager/prometheus.yml
+    mode: 0644
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | copy alertmanager service config
+  copy:
+      src: alertmanager.service
+      dest: /usr/lib/systemd/system
+      mode: 0644
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | start prometheus service
+  command: "docker run -d --net host  -v /etc/alertmanager:/etc/prometheus -v /etc/kubernetes/ssl/:/var/run/secrets/kubernetes.io/serviceaccount/ prom/prometheus:v1.4.1 -config.file=/etc/prometheus/prometheus.yml -alertmanager.url=http://{{hostvars[groups['alertmanager'][0]]['ip']}}:9093 -web.enable-remote-shutdown=false -web.external-url=http://{{hostvars[groups['alertmanager'][0]]['ip']}}:9090 -storage.local.retention 24h"
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | enable alertmanager service
+  shell: "systemctl enable alertmanager.service"
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"
+
+- name: Kubernetes alertmanager | start alertmanager service
+  shell: "systemctl start alertmanager.service"
+  delegate_to: "{{hostvars[groups['alertmanager'][0]]['ip']}}"

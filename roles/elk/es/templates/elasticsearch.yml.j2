@@ -1,0 +1,11 @@
+indices.fielddata.cache.size: 30%
+cluster.name: elasticsearch-k8s
+{% for i in groups["es"] %}
+{% if i == inventory_hostname %}
+node.name: node-{{loop.index}}
+{% endif %}
+{% endfor %}
+network.host: {{hostvars[inventory_hostname]["ip"]}}
+http.port: 9200
+discovery.zen.ping.unicast.hosts: [{% for i in groups['es']%}{% if i != inventory_hostname and not loop.last %}"{{hostvars[i]['ip']}}",{% elif i != inventory_hostname %}"{{ hostvars[i]['ip']}}"{% endif %}{% endfor %}]
+discovery.zen.minimum_master_nodes: 1

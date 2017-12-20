@@ -1,0 +1,7 @@
+NAME [0-9,a-z,A-Z]+
+NUM [0-9,a-z,A-Z]+
+NS [a-z,A-Z,-]*
+SEC .
+APP [0-9,a-z,A-Z,-]+
+APP_MESSAGE %{APP:app}-%{NUM:rsnum}-%{NUM:pdnum}_%{NS:namespace}_%{APP:containername}-%{NAME:containerId}.%{NS}
+COMPONENT_SEC %{SEC:sec}

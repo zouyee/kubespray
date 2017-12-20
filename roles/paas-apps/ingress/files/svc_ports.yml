@@ -1,0 +1,51 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ingress-backend
+  namespace: kube-system
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ingress-backend
+    spec:
+      nodeSelector:
+        component: "ingress"
+      volumes:
+      - name: config-volume
+        configMap:
+          name: ingress-backend-config
+          items:
+          - key: config
+            path: config.json
+      containers:
+      - name: ingress-backend
+        imagePullPolicy: IfNotPresent
+        image: registry.cn-hangzhou.aliyuncs.com/dongqi/ingress-backend:v1.8
+        ports:
+        - containerPort: 32006
+          hostPort: 32006
+        volumeMounts:
+        - mountPath: /config
+          name: config-volume
+          readOnly: true
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-backend
+  namespace: kube-system
+spec:
+  ports:
+  - name: ingress-backend
+    nodePort: 32006
+    port: 32006
+    protocol: TCP
+    targetPort: 32006
+  selector:
+    app: ingress-backend
+  sessionAffinity: None
+  type: NodePort

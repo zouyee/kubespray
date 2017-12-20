@@ -1,0 +1,42 @@
+---
+#- name: test
+#  debug:
+#      msg: "{{hostvars[item]['ip']}}"
+#  with_items: "{{play_hosts}}"
+
+#- name: debug
+#  file:
+#      path: /root/xxx
+#      state: touch
+#      mode: 0755
+# - name: test
+#   copy:
+#     src: test.sh
+#     dest: /dcos
+#     mode: 0755
+#
+# - name: excute
+#   command: "/bin/bash /dcos/test.sh"
+#
+# - name: blockinfile
+#   blockinfile:
+#       dest: /etc/hosts
+#       block: |
+#          {{hostvars[item]['ip']}}    {{item}}
+#       marker: "# kafka node"
+#   with_items: "{{groups['kafka']}}"
+
+- name: Fluent | Check if fluent daemonset exists
+  command: "{{ bin_dir }}/kubectl get ds fluentd-k8s -n {{system_namespace}}"
+  register: fluentd-k8s-ds
+  changed_when: False
+  failed_when: False
+
+- name: Fluent | Start fluent daemonset service
+  kube:
+      name: "fluentd-k8s"
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{kube_config_dir}}/fluent-daemonset.yml"
+      namespace: "{{ system_namespace }}"
+  when: fluentd-k8s-ds.rc == 1 and inventory_hostname == groups['kube-master'][0]
+

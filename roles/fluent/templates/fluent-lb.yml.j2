@@ -1,0 +1,49 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  labels:
+    app: fluentd-lb
+  name: fluentd-lb
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: fluentd-lb
+  template:
+    metadata:
+      labels:
+        app: fluentd-lb
+    spec:
+      containers:
+      - image: registry.paas/library/fluentd-lb:v0.6
+        imagePullPolicy: Always
+        name: fluentd-lb
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /dcos/lblog
+          name: log-storage
+        - mountPath: /etc/fluent
+          name: fluent
+        - mountPath: /etc/localtime
+          name: local-time
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        fluentd-lb-daemonset: "true"
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      volumes:
+      - hostPath:
+          path: /dcos/lblog
+        name: log-storage
+      - hostPath:
+          path: /etc/localtime
+        name: local-time
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: fluent.conf
+            path: fluent.conf
+          name: lblog-config
+        name: fluent

@@ -1,0 +1,41 @@
+---
+- name: Kubernetes Dex app | copy dex app image
+  copy:
+      src: "{{ playbook_dir }}/tar/paas-apps/user_management/dex-app/bcpaas_dex-app_1.0.tar"
+      dest: "{{paas_images_dir}}"
+      mode: 0755
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: Kubernetes Dex app | load dex app image
+  command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/bcpaas_dex-app_1.0.tar"
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: Kubernetes Dex app | Copy apiserver pem
+  command: "sshpass -p {{ ansible_password }} scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  {{ kube_cert_dir}}/apiserver.pem root@{{ hostvars[item]['ip'] }}:{{ kube_cert_dir }}"
+  with_items: "{{ groups['kube-node'] }}"
+
+- name: Kubernetes Dex App | Write dex app yaml
+  template:
+      src: dex-app.yml.j2
+      dest: "{{kube_config_dir}}/dex-app.yml"
+
+- name: Kubernetes Dex App | Check if dex svc exists
+  command: "{{ bin_dir }}/kubectl get svc dex-app -n {{system_namespace}}"
+  register: 'dexappsvc'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes Dex App | Check if dex deploy exists
+  command: "{{ bin_dir }}/kubectl get deploy dex-app -n {{system_namespace}}"
+  register: 'dexappdeploy'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes Dex App | Start dex app application
+  kube:
+      name: "dex-app"
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{kube_config_dir}}/dex-app.yml"
+      namespace: "{{system_namespace}}"
+  when: dexappdeploy|failed and dexappsvc|failed
+#  ignore_errors: yes

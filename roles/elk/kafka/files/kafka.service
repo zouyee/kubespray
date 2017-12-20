@@ -1,0 +1,9 @@
+[Unit]
+After=zookeeper.service
+[Service]
+Restart=always
+StartLimitInterval=0
+RestartSec=15
+ExecStart=/opt/kafka_2.11-0.8.2.1/bin/kafka-server-start.sh /opt/kafka_2.11-0.8.2.1/config/server.properties
+[Install]
+WantedBy=multi-user.target

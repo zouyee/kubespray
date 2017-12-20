@@ -1,0 +1,86 @@
+---
+- name: Kubernetes ingress | copy ingress controller image
+  copy:
+      src: "{{ playbook_dir }}/tar/paas-apps/ingress/*"
+      dest: "{{paas_images_dir}}"
+      mode: 0755
+
+- name: Kubernetes ingress | load ingress controller  backend
+  command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/defaultbackend_v1.2.tar"
+
+- name: Kubernetes ingress | load ingress controller  image
+  command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/nginx-ingress-controller_0.9.0-beta.13-dq-v1.tar"
+
+- name: Kubernetes ingress | load ingress controller exporter image
+  command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/nginx-vts-ingress-controller-exporter.tar"
+
+- name: Kubernetes ingress | load ingress controller port image
+  command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/ingress-backend-v1.8.tar"
+
+- name: Kubernetes ingress | get pod host of mysql
+  shell: "{{ bin_dir }}/kubectl get pods -n kube-system -owide |awk '/mysql/ {print $7;exit}'"
+  register: mysqlpod
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+
+- name: Kubernetes ingress | Write config.json 
+  template:
+      src: config.json.j2
+      dest: "{{kube_config_dir}}/config.json"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+
+- name: Kubernetes ingress | copy svc_ports.yml
+  copy:
+    src: svc_ports.yml
+    dest: "{{kube_config_dir}}/svc_ports.yml"
+    mode: 0644
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+
+- name: Kubernetes ingress | copy default-http-backend.yml
+  copy:
+    src: default-http-backend.yaml
+    dest: "{{kube_config_dir}}/default-http-backend.yaml"
+    mode: 0644
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+
+- name: Kubernetes ingress | Check if default-http-backend deploy exists
+  command: "{{ bin_dir }}/kubectl get deploy default-http-backend -n default"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  register: 'defaulthttpbackenddeploy'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes ingress | Check if default-http-backend svc exists
+  command: "{{ bin_dir }}/kubectl get svc default-http-backend -n default"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  register: 'defaulthttpbackendsvc'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes ingress | create default-http-backend deploy and svc
+  command: "{{ bin_dir }}/kubectl create -f {{kube_config_dir}}/default-http-backend.yaml"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  when: defaulthttpbackenddeploy|failed and defaulthttpbackendsvc|failed
+
+- name: Kubernetes ingress | Check if ingress-ports-deployment deploy exists
+  command: "{{ bin_dir }}/kubectl get deploy ingress-ports-deployment -n {{system_namespace}}"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  register: 'ingressportsdeploy'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes ingress | Check if sql-config cm exists
+  command: "{{ bin_dir }}/kubectl get cm sql-config -n {{system_namespace}}"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  register: 'sqlconfigcm'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes ingress | create sql-config cm 
+  command: "{{ bin_dir }}/kubectl create cm ingress-backend-config --from-file=config={{kube_config_dir}}/config.json -n {{system_namespace}}"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  when: sqlconfigcm|failed
+
+- name: Kubernetes ingress | create ingress-ports svc  
+  command: "{{ bin_dir }}/kubectl create -f {{kube_config_dir}}/svc_ports.yml"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  when: ingressportssvc|failed

@@ -1,0 +1,69 @@
+---
+- hosts: kube-master[0]
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - { role: kargo-defaults}
+    - { role: bastion-ssh-config, tags: ["localhost", "bastion"]}
+
+- hosts: kube-node
+  any_errors_fatal: true
+  gather_facts: false
+  vars:
+    # Need to disable pipelining for bootstrap-os as some systems have requiretty in sudoers set, which makes pipelining
+    # fail. bootstrap-os fixes this on these systems, so in later plays it can be enabled.
+    ansible_ssh_pipelining: false
+  roles:
+    - { role: kargo-defaults}
+    - { role: bootstrap-os, tags: bootstrap-os}
+
+- hosts: kube-node
+  any_errors_fatal: true
+  vars:
+    ansible_ssh_pipelining: true
+  gather_facts: true
+
+- hosts: kube-node
+  any_errors_fatal: true
+  roles:
+    - { role: kargo-defaults}
+    - { role: kubernetes/preinstall, tags: preinstall }
+    - { role: docker, tags: docker }
+    - role: rkt
+      tags: rkt
+      when: "'rkt' in [etcd_deployment_type, kubelet_deployment_type, vault_deployment_type]"
+
+- hosts: kube-node
+  any_errors_fatal: true
+  gather_facts: false
+  roles:
+    - { role: kargo-defaults}
+    - { role: load-images, tags: bootstrap-os}
+
+- hosts: etcd:k8s-cluster:vault
+  any_errors_fatal: true
+  roles:
+    - { role: kargo-defaults, when: "cert_management == 'vault'" }
+    - { role: vault, tags: vault, vault_bootstrap: true, when: "cert_management == 'vault'" }
+
+- hosts: kube-node
+  any_errors_fatal: true
+  roles:
+    - { role: kargo-defaults}
+    - { role: vault, tags: vault, when: "cert_management == 'vault'"}
+
+- hosts: kube-node
+  any_errors_fatal: true
+  roles:
+    - { role: kargo-defaults}
+    - { role: kubernetes/node, tags: node }
+    - { role: network_plugin, tags: network }
+
+
+- hosts: k8s-node
+  any_errors_fatal: true
+  roles:
+    - { role: kargo-defaults}
+    - { role: dnsmasq, when: "dns_mode == 'dnsmasq_kubedns'", tags: dnsmasq }
+    - { role: kubernetes/preinstall, when: "dns_mode != 'none' and resolvconf_mode == 'host_resolvconf'", tags: resolvconf }
+

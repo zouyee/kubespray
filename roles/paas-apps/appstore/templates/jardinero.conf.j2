@@ -1,0 +1,11 @@
+[kubernetes]
+k8s_config="conf/kubernetes/admin.conf"
+
+[helm]
+tiller_namespace=kube-system
+tiller_serviceName=tiller-deploy 
+tiller_address={{ hostvars[groups['appstore'][0]]['ip'] }}
+tiller_port=32134
+repo_file=/root/.helm/repository/repositories.yaml
+cache_directory=/root/.helm/repository/cache
+cache_timeout=100

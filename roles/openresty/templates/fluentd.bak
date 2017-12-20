@@ -1,0 +1,25 @@
+<source>
+  @type tail
+  format none
+  path /usr/local/openresty/nginx/logs/access.log
+  pos_file /usr/local/openresty/nginx/logs/my.log.pos
+  tag log.nginx
+</source>
+<filter log.nginx>
+  @type record_transformer
+  enable_ruby
+  <record>
+    timestamp ${ (Time.now.to_f * 1000).to_i }
+    cluster cluster-1
+  </record>
+</filter>
+<filter log.nginx>
+  @type grep
+  exclude1 message GET|logmanage
+</filter>
+<match log.nginx>
+  @type kafka
+  brokers 10.142.21.210:19092,10.142.21.211:19092,10.142.21.212:19092
+  default_topic nginx_log
+  output_data_type json
+</match>

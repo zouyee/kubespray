@@ -1,0 +1,590 @@
+input {
+  kafka {
+    zk_connect => "{% for item in groups["zookeeper"] %}{% if not loop.last %}{{hostvars[item]['ip']}}:{{ zookeeper_port }},{% else %}{{hostvars[item]['ip']}}:{{ zookeeper_port }}/kafka{% endif %}{% endfor %}"
+    topic_id => "nginx_log"
+    codec => "json"
+    type => "nginx"
+  }
+  kafka {
+    zk_connect => "{% for item in groups["zookeeper"] %}{% if not loop.last %}{{hostvars[item]['ip']}}:{{ zookeeper_port }},{% else %}{{hostvars[item]['ip']}}:{{ zookeeper_port }}/kafka{% endif %}{% endfor %}"
+    topic_id => "kube_log"
+    codec => "json"
+    type => "kube"
+  }
+  kafka {
+    zk_connect => "{% for item in groups["zookeeper"] %}{% if not loop.last %}{{hostvars[item]['ip']}}:{{ zookeeper_port }},{% else %}{{hostvars[item]['ip']}}:{{ zookeeper_port }}/kafka{% endif %}{% endfor %}"
+    topic_id => "kube_app"
+    codec => "json"
+    type => "application"
+  }
+}
+filter {
+
+  if [type] == "nginx" {
+     json{
+       source => "message"
+     }
+
+     if [method] != "GET"{
+       if [method] == "POST"{
+            mutate{
+                 replace => ["method","创建"]
+            }
+       }else if [method] == "DELETE"{
+            mutate{
+                 replace => ["method","删除"]
+            }
+       }else if [method] == "PUT" or [method] == "PATCH"{
+            mutate{
+                 replace => ["method","修改"]
+            }
+            if [method] == "PATCH" and [uri] =~ /^\/.*deployments.*/ {
+                 mutate{
+                   replace => ["method","调整实例"]
+                }
+            }
+       }
+
+
+       if [status] == "200" or [status] == "201"{
+            mutate{
+                 replace => ["status","成功"]
+                 }
+       } else{
+            mutate{
+                 replace => ["status","失败"]
+            }
+       }
+
+       if [uri] =~ /apis\/cmss\.com\/v1\// {
+           mutate {
+		split => ["uri", "/"]
+	   }
+           if [uri][4] == "user" {
+               if [uri][-1] == "password" {
+                  mutate {
+                      add_field => ["opobj","密码"]
+                      add_field => ["detail","用户%{[uri][-2]}修改密码"]
+                  }
+               }
+               else if [uri][-1] == "groups" {
+                  if [method] == "修改" {
+                     mutate {
+                         replace => ["method","增加"]
+                     }
+                  }
+                  mutate {
+                      add_field => ["opobj","用户组"]
+                      add_field => ["detail","用户组%{[method]}用户%{[uri][-2]}"]
+                  }
+               }
+               else if [uri][-1] == "user" {
+                  mutate {
+                      add_field => ["opobj","用户"]
+                      add_field => ["detail", "用户名：%{[body]}"]
+                  }
+               }else {
+                  mutate {
+                      add_field => ["opobj","用户"]
+                      add_field => ["detail","用户名：%{[uri][-1]}"]
+                  }
+               }
+           }
+           else if [uri][4] == "group" {
+             if [uri][-1] == "group" {
+                 mutate {
+                     add_field => ["opobj","用户组"]
+                     add_field => ["detail", "用户组：%{[body]}"]
+                 }
+             }else if [uri][-2] == "group" {
+                 mutate {
+                     add_field => ["opobj","用户组"]
+                     add_field => ["detail","%{[method]}用户组%{[uri][-1]}"]
+                 }
+             }else if [uri][-3] == "group" {
+                 if [method] == "修改" {
+                     mutate {
+                         replace => ["method","增加"]
+                     }
+                 }
+                 mutate {
+                     add_field => ["opobj","用户组"]
+                     add_field => ["detail","用户组%{[uri][-2]}%{[method]}用户%{[uri][-1]}"]
+                 }
+             }
+           }
+           else if [uri][4] == "resource" {
+             if [uri][-1] == "resource" {
+                 mutate {
+                     add_field => ["opobj","权限资源"]
+                     add_field => ["detail","%{[method]}权限资源"]
+
+                 }
+             }else{
+                 mutate {
+                     add_field => ["opobj","权限资源"]
+                     add_field => ["detail","%{[method]}权限资源%{[uri][-1]}"]
+                 }
+             }
+           }
+
+           else if [uri][4] == "rule" {
+             if [uri][-1] == "rule" {
+                 mutate {
+                     add_field => ["opobj","权限项"]
+                     add_field => ["detail", "权限项：%{[body]}"]
+                 }
+             }else if [uri][-2] == "rule" {
+                 mutate {
+                     add_field => ["opobj","权限项"]
+                     add_field => ["detail","权限项%{[uri][-1]}"]
+                 }
+             }else if [uri][-3] == "rule" {
+                 mutate {
+                     add_field => ["opobj","权限项"]
+                     add_field => ["detail","权限项%{[uri][-2]}%{[method]}权限资源"]
+                 }
+             }else if [uri][-4] == "rule" {
+                 mutate {
+                     add_field => ["opobj","权限项"]
+                     add_field => ["detail","权限项%{[uri][-3]}%{[method]}权限资源%{[uri][-1]}"]
+                 }
+             }
+           }
+           else if [uri][4] == "role" {
+             if [uri][-1] == "role" {
+                 mutate {
+                      add_field => ["opobj","角色"]
+                      add_field => ["detail", "角色：%{[body]}"]
+                 }
+             }else if [uri][-2] == "role" {
+                 mutate {
+                      add_field => ["opobj","角色"]
+                      add_field => ["detail","角色ID:%{[uri][-1]}"]
+                 }
+             }else if [uri][-3] == "role" {
+                 mutate {
+                      add_field => ["opobj","角色"]
+                      add_field => ["detail","角色(ID:%{[uri][-2]})添加权限"]
+                 }
+             }else if [uri][-4] == "role" {
+                 mutate {
+                      add_field => ["opobj","角色"]
+                      add_field => ["detail","角色(ID:%{[uri][-3]})%{[method]}权限(ID:%{[uri][-1]})"]
+                 }
+             }
+
+           }
+           else if [uri][4] == "authority" {
+               if [uri][-1] == "authority" {
+                   mutate {
+                      add_field => ["opobj","赋权"]
+                      add_field => ["detail", "项目/用户(组)：%{[body]}"]
+                      replace => ["method","添加"]
+                   }
+               }else if [uri][-2] == "authority"{
+                   mutate {
+                      add_field => ["opobj","赋权"]
+                      add_field => ["detail","赋权ID:%{[uri][-1]}"]
+                   }
+               } else if [uri][-4] == "authority" {
+                   if [uri][-2] == "role" {
+                        mutate {
+                           add_field => ["opobj","赋权"]
+                           add_field => ["detail","角色(ID:%{[uri][-1]})%{[method]}权限(ID:%{[uri][-3]})"]
+                        }
+                   }else {
+                       if [uri][-1] == "0"{
+                           mutate {
+                               replace => ["method","关闭"]
+                               add_field => ["opobj","赋权"]
+                               add_field => ["detail","权限ID:%{[uri][-3]}"]
+                           }
+                       }else {
+                           mutate {
+                               replace => ["method","激活"]
+                               add_field => ["opobj","赋权"]
+                               add_field => ["detail","权限ID:%{[uri][-3]}"]
+                           }
+                     }
+                  }
+               }
+           }
+           else if [uri][4] == "login" {
+                mutate {
+                      replace => ["method","登陆"]
+                }
+           }
+           else {
+               drop{}
+           }
+       }
+       else if [uri] =~ /conductor\/api\/v1\// {
+           mutate {
+                split => ["uri", "/"]
+           }
+           if [uri][4] == "appdeploymentfromfile" {
+               mutate{
+                 split=>["body",":"]
+               }
+               if [body][1] == "Deployment" {
+                  mutate {
+                  	add_field => ["opobj","无状态应用"]
+                  }
+               }
+               else if [body][1] == "DaemonSet" {
+                  mutate {
+                  	add_field => ["opobj","系统应用"]
+                  }
+               }
+               else {
+                  mutate {
+                        add_field => ["opobj","有状态应用"]
+                  }
+               }
+               mutate {
+                 add_field => ["detail", "应用名称：%{[body][0]}"]
+               }
+           }
+           else if [uri][5] == "deployment" {
+               mutate {
+                 add_field => ["opobj","无状态应用"]
+                 add_field => ["detail","应用名称：%{[uri][-1]}"]
+               }
+           }
+           else if [uri][5] == "daemonset" {
+               mutate {
+                 add_field => ["opobj","系统应用"]
+                 add_field => ["detail","应用名称：%{[uri][-1]}"]
+               }
+           }
+           else if [uri][5] == "statefulset" {
+               mutate {
+                 add_field => ["opobj","有状态应用"]
+                 add_field => ["detail","应用名称：%{[uri][-1]}"]
+               }
+           }
+           else if [uri][5] == "service"{
+               mutate {
+                 add_field => ["opobj","服务"]
+                 add_field => ["detail","服务名称：%{[uri][-1]}"]
+               }
+           }
+           else if [uri][5] == "configmap" {
+               mutate {
+                 add_field => ["opobj","配置集"]
+               }
+               if [method] != "创建" {
+                  mutate {
+                      add_field => ["detail","配置名称：%{[uri][-1]}"]
+                  }
+               }
+               else {
+                  mutate {
+                      add_field => ["detail", "配置名称：%{[body]}"]
+                  }
+               }
+           }
+           else if [uri][5] == "secret" {
+               mutate {
+                   add_field => ["opobj","密钥集"]
+               }
+               if [method] != "创建" {
+                   mutate{
+                       add_field => ["detail","密钥名称：%{[uri][-1]}"]
+                   }
+               }
+               else {
+                  mutate {
+                      add_field => ["detail", "密钥名称：%{[body]}"]
+                  }
+               }
+           }
+           else if [uri][5] == "namespace"{
+               mutate {
+                   add_field => ["opobj","项目"]
+               }
+               if [method] != "创建" {
+                    mutate {
+                        add_field => ["detail","项目名称：%{[uri][-1]}"]
+                    }
+               }
+               else {
+                  mutate {
+                      add_field => ["detail", "项目名称：%{[body]}"]
+                  }
+               }
+           }
+           else if [uri][5] == "ingress" {
+               mutate {
+                   add_field => ["opobj","路由"]
+               }
+               if [method] != "创建" {
+                    mutate {
+                        add_field => ["detail","路由名称：%{[uri][-1]}"]
+                    }
+               }
+               else {
+                  mutate {
+                      add_field => ["detail", "路由名称：%{[body]}"]
+                  }
+               }
+           }
+           else {
+              drop{}
+           }
+       }
+       else if [uri] =~ /^\/.*resource\/.*/ {
+            mutate {
+                split => ["uri", "/"]
+                add_field => ["opobj","主机资源"]
+                add_field => ["detail","主机IP:%{[uri][-1]}"]
+            }
+       }
+       else if [uri] =~ /^\/.*clusternodes\/.*/ {
+            mutate{
+                split => ["uri", "/"]
+                add_field => ["opobj","节点"]
+                add_field => ["detail","主机IP:%{[uri][-1]}"]
+            }
+       }
+       else if [uri] =~ /^\/.*horizontalpodautoscalers.*/{
+             mutate{
+                 add_field => ["opobj","弹性伸缩"]
+             }
+       }
+       else{
+             drop{}
+       }
+
+       mutate {
+           rename => ["[method]","optype"]
+
+           remove_field => ["body"]
+           remove_field => ["uri"]
+           remove_field => ["message"]
+           remove_field => ["@version"]
+           remove_field => ["@timestamp"]
+      }
+
+    }else{
+     drop{}
+    }
+  }
+  else if [type] == "application"{
+   grok{
+     patterns_dir => "/etc/logstash/conf.d/patterns"
+     match => { "file" => "%{APP_MESSAGE}" }
+   }
+   json{
+      source => "message"
+   }
+
+   if [app] == "kube-proxy" or [app] == "kube-scheduler" or [app] == "kube-apiserver" or [app] == "kube-controller-manager" or [app] == "flannel" {
+     mutate{
+         replace => [ "type", "kube" ]
+
+         rename => [ "[log]", "message" ]
+         rename => [ "[host_param]", "host" ]
+
+         add_field => { "component_name" => "%{app}.service" }
+
+         remove_field => ["app"]
+         remove_field => ["rsnum"]
+         remove_field => ["pdnum"]
+         remove_field => ["namespace"]
+         remove_field => ["containername"]
+         remove_field => ["containerId"]
+         remove_field => ["pdname"]
+         remove_field => ["file"]
+         remove_field => ["@timestamp"]
+         remove_field => ["@version"]
+         remove_field => ["stream"]
+         remove_field => ["time"]
+         }
+         grok{
+             patterns_dir => "/etc/logstash/conf.d/patterns"
+             match => { "message" => "%{COMPONENT_SEC}" }
+         }
+         if [sec]  == "I" {
+             mutate {
+                 replace => [ "severity", "info" ]
+             }
+         }
+         else if [sec] == "N"{
+             mutate {
+                 replace => [ "severity", "notice" ]
+             }
+         }
+         else if [sec] == "W"{
+             mutate {
+                 replace => [ "severity", "warning" ]
+             }
+         }
+         else if [sec] == "E"{
+             mutate {
+                 replace => [ "severity", "error" ]
+             }
+         }
+         else if [sec] == "F"{
+             mutate {
+                 replace => [ "severity", "fatal" ]
+             }
+         }
+         else if [sec] == "A"{
+             mutate {
+                 replace => [ "severity", "alert" ]
+             }
+         }
+         else{
+            mutate {
+                 replace => [ "severity", "info" ]
+            }
+         }
+   }
+   else{
+     mutate {
+      rename => [ "[host_param]", "host" ]
+
+      add_field => { "pdname" => "%{app}-%{rsnum}-%{pdnum}" }
+
+      remove_field => ["file"]
+      remove_field => ["time"]
+      remove_field => ["stream"]
+      remove_field => ["message"]
+      remove_field => ["@version"]
+      remove_field => ["@timestamp"]
+     }
+    }
+  }
+  else if [type] == "kube" {
+    mutate {
+      rename => [ "[_SYSTEMD_UNIT]", "component_name" ]
+      rename => [ "[host_param]", "host" ]
+      rename => [ "[MESSAGE]", "message" ]
+      rename => [ "[PRIORITY]", "severity" ]
+
+      remove_field => ["_SYSTEMD_SLICE"]
+      remove_field => ["_HOSTNAME"]
+      remove_field => ["_UID"]
+      remove_field => ["_GID"]
+      remove_field => ["_BOOT_ID"]
+      remove_field => ["_MACHINE_ID"]
+      remove_field => ["SYSLOG_FACILITY"]
+      remove_field => ["_CAP_EFFECTIVE"]
+      remove_field => ["_SELINUX_CONTEXT"]
+      remove_field => ["_TRANSPORT"]
+      remove_field => ["SYSLOG_IDENTIFIER"]
+      remove_field => ["_PID"]
+      remove_field => ["_COMM"]
+      remove_field => ["_EXE"]
+      remove_field => ["_CMDLINE"]
+      remove_field => ["_SYSTEMD_CGROUP"]
+      remove_field => ["@version"]
+      remove_field => ["@timestamp"]
+    }
+    grok{
+     patterns_dir => "/etc/logstash/conf.d/patterns"
+     match => { "message" => "%{COMPONENT_SEC}" }
+    }
+
+    if [severity] == "6" or [severity] == "INFO" or [severity] == "I" {
+      mutate {
+        replace => [ "severity", "info" ]
+      }
+    }
+    else if [severity] == "5" or [severity] == "NOTICE" or [severity] == "N" {
+      mutate {
+        replace => [ "severity", "notice" ]
+      }
+    }
+    else if [severity] == "4" or [severity] == "warn" or [severity] == "WARN" or [severity] == "WARNING" or [severity] == "W" {
+      mutate {
+        replace => [ "severity", "warning" ]
+      }
+    }
+    else if [severity] == "3" or [severity] == "ERROR" or [severity] == "E" {
+      mutate {
+        replace => [ "severity", "error" ]
+      }
+    }
+    else if [severity] == "2" or [severity] == "CRITICAL" or [severity] == "C" {
+      mutate {
+        replace => [ "severity", "critical" ]
+      }
+    }
+    else if [severity] == "1" or [severity] == "ALERT" or [severity] == "A" {
+      mutate {
+        replace => [ "severity", "alert" ]
+      }
+    }
+    else if [severity] == "0" or [severity] == "emerg" or [severity] == "EMERGENCY" {
+      mutate {
+        replace => [ "severity", "emergency" ]
+      }
+    }
+    else if [severity] == "F" or [severity] == "f" or [severity] == "FATAL" {
+      mutate {
+        replace => [ "severity", "fatal" ]
+      }
+    }
+  }
+  if [sec]  == "I" {
+      mutate {
+        replace => [ "severity", "info" ]
+      }
+  }
+  else if [sec] == "N"{
+      mutate {
+        replace => [ "severity", "notice" ]
+      }
+  }
+  else if [sec] == "W"{
+      mutate {
+        replace => [ "severity", "warning" ]
+      }
+  }
+  else if [sec] == "E"{
+      mutate {
+        replace => [ "severity", "error" ]
+      }
+  }
+  else if [sec] == "F"{
+      mutate {
+        replace => [ "severity", "fatal" ]
+      }
+  }
+  else if [sec] == "A"{
+      mutate {
+        replace => [ "severity", "alert" ]
+      }
+  }
+  mutate {
+     remove_field => ["sec"]
+  }
+}
+
+output {
+  if [type] == "nginx" {
+    elasticsearch {
+      hosts => [{% for item in groups["es"] %}{% if not loop.last %}"{{hostvars[item]['ip']}}:{{ es_port }}",{% else %}"{{hostvars[item]['ip']}}:{{ es_port }}"{% endif %}{% endfor %}]
+      index => "k8s-audit"
+      document_type => "%{cluster}-%{namespace}"
+    }
+  }
+  else if [type] == "kube" {
+    elasticsearch {
+      hosts => [{% for item in groups["es"] %}{% if not loop.last %}"{{hostvars[item]['ip']}}:{{ es_port }}",{% else %}"{{hostvars[item]['ip']}}:{{ es_port }}"{% endif %}{% endfor %}]
+      index => "k8s-kube"
+      document_type => "%{cluster}"
+    }
+  }
+  else if [type] == "application" {
+    elasticsearch {
+      hosts => [{% for item in groups["es"] %}{% if not loop.last %}"{{hostvars[item]['ip']}}:{{ es_port }}",{% else %}"{{hostvars[item]['ip']}}:{{ es_port }}"{% endif %}{% endfor %}]
+      index => "k8s-application"
+      document_type => "%{cluster}-%{namespace}"
+    }
+  }
+  stdout { codec => rubydebug }
+}

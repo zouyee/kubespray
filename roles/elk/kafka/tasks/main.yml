@@ -1,0 +1,51 @@
+---
+# - name: ELK | java file exists
+#   shell: "ls {{java}}"
+#   register: java_file
+#
+# - name: ELK | ensure java dir exists on zookeeper
+#   file:
+#       path: "{{java}}"
+#       state: directory
+#       mode: 0755
+#   when: not java_file
+#
+# - name: ELK | copy localrepo tar
+#   copy:
+#       src: java.tar.gz
+#       dest: "{{java}}"
+#       mode: 0755
+#
+# - name: ELK | unarchive localrepo
+#   shell: "tar -zxvf {{java}}/java.tar.gz -C {{java}}"
+#
+# - name: ELK | install java jdk
+#   shell: "rpm -ivh {{java}}/java/*.rpm"
+#
+# - name: ELK | copy kafka package
+#   copy:
+#       src: kafka.tar.gz
+#       dest: /opt
+#       mode: 0755
+#   when: "{{not java_file | default(false)}}"
+#
+# - name: ELK | unarchive kafka package
+#   shell: "tar -zxvf /opt/kafka.tar.gz -C /opt"
+
+- name: ELK | gen zookeeper server properties
+  template:
+      src: server.properties.j2
+      dest: /opt/kafka_2.11-0.8.2.1/config/server.properties
+      mode: 0555
+
+- name: ELK | gen the kafka service
+  copy:
+      src: kafka.service
+      dest: /etc/systemd/system
+      mode: 0755
+
+- name: ELK | enable and start kafka service
+  service:
+      name: kafka
+      enabled: yes
+      state: started

@@ -1,0 +1,55 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: dex-app
+  name: dex-app
+  namespace: kube-system
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: dex-app
+    spec:
+      containers:
+      - image: bcpaas/dex-app:1.0
+        imagePullPolicy: IfNotPresent
+        name: dex-app
+        command: ["/usr/local/bin/dex-app"]
+        args:
+          - --issuer=https://{{hostvars[groups['kube-master'][0]]['ip']}}:32000
+          - --issuer-root-ca=/etc/kubernetes/ssl/apiserver.pem
+          - --listen=http://0.0.0.0:5555
+          - --redirect-uri=http://{{hostvars[groups['kube-master'][0]]['ip']}}:32002/callback
+          - --debug
+        ports:
+        - name: dex-app
+          containerPort: 5555
+        volumeMounts:
+        - name: cert
+          mountPath: /etc/kubernetes/ssl
+      volumes:
+      - name: cert
+        hostPath:
+          path: "/etc/kubernetes/ssl"
+      nodeSelector:
+        kubernetes.io/hostname: {{groups['user_management'][0]}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: dex-app
+  name: dex-app
+  namespace: kube-system
+spec:
+  type: NodePort
+  ports:
+  - name: dex-app
+    port: 5555
+    protocol: TCP
+    targetPort: 5555
+    nodePort: 32002
+  selector:
+    app: dex-app

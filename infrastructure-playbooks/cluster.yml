@@ -1,0 +1,145 @@
+---
+# - hosts: zookeeper
+#   gather_facts: false
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: elk/zookeeper, tags: ["elk", "zookeeper"] }
+#
+# - hosts: kafka
+#   gather_facts: false
+#   roles:
+#     - { role: kargo-defaults }
+#     - { role: elk/kafka, tags: ["elk", "kafka"] }
+#
+# - hosts: logstash
+#   gather_facts: false
+#   roles:
+#     - { role: kargo-defaults }
+#     - { role: elk/logstash, tags: ["elk", "logstash"] }
+#
+# - hosts: es
+#   gather_facts: false
+#   roles:
+#     - { role: kargo-defaults }
+#     - { role: elk/es, tags: ["elk", "es"] }
+#
+# - hosts: localhost
+#   gather_facts: false
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: bastion-ssh-config, tags: ["baseenv", "localhost", "bastion"]}
+#
+# - hosts: k8s-cluster:etcd:calico-rr
+#   any_errors_fatal: true
+#   gather_facts: false
+#   vars:
+#     # Need to disable pipelining for bootstrap-os as some systems have requiretty in sudoers set, which makes pipelining
+#     # fail. bootstrap-os fixes this on these systems, so in later plays it can be enabled.
+#     ansible_ssh_pipelining: false
+#
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: bootstrap-os, tags: ["baseenv", "bootstrap-os"]}
+#
+#
+# - hosts: k8s-cluster:etcd:calico-rr
+#   any_errors_fatal: true
+#   vars:
+#     ansible_ssh_pipelining: true
+#   gather_facts: true
+#
+# - hosts: k8s-cluster:etcd:calico-rr
+#   any_errors_fatal: true
+#   roles:
+#     - { role: kargo-defaults}
+#     # ignore
+#     # - { role: kernel-upgrade, tags: kernel-upgrade, when: kernel_upgrade is defined and kernel_upgrade }
+#     - { role: kubernetes/preinstall, tags: ["baseenv", "preinstall"] }
+#     - { role: docker, tags: ["docker", "baseenv"] }
+#     - role: rkt
+#       tags: rkt
+#       when: "'rkt' in [etcd_deployment_type, kubelet_deployment_type, vault_deployment_type]"
+#
+# - hosts: k8s-cluster
+#   any_errors_fatal: true
+#   gather_facts: false
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: load-images, tags: baseenv}
+#
+# - hosts: etcd:k8s-cluster:vault
+#   any_errors_fatal: true
+#   roles:
+#     - { role: kargo-defaults, tags: "baseenv", when: "cert_management == 'vault'" }
+#     - { role: vault, tags: ["vault", "baseenv"], vault_bootstrap: true, when: "cert_management == 'vault'" }
+#
+# - hosts: etcd
+#   any_errors_fatal: true
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: etcd, tags: ["baseenv", "etcd"], etcd_cluster_setup: true }
+#
+# - hosts: k8s-cluster
+#   any_errors_fatal: true
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: etcd, tags: ["baseenv", "etcd"], etcd_cluster_setup: false }
+#
+# - hosts: etcd:k8s-cluster:vault
+#   any_errors_fatal: true
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: vault, tags: ["baseenv", "vault"], when: "cert_management == 'vault'"}
+#
+# - hosts: k8s-cluster
+#   any_errors_fatal: true
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: kubernetes/node, tags: ["baseenv", "node"] }
+#     - { role: network_plugin, tags: ["baseenv", "network"] }
+#
+# - hosts: kube-master
+#   any_errors_fatal: true
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: kubernetes/master, tags: ["master", "baseenv"] }
+#     - { role: kubernetes-apps/network_plugin, tags: ["network", "baseenv"] }
+#
+# - hosts: calico-rr
+#   any_errors_fatal: true
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: network_plugin/calico/rr, tags: ["baseenv", "network"] }
+#
+# - hosts: k8s-cluster
+#   any_errors_fatal: true
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: dnsmasq, when: "dns_mode == 'dnsmasq_kubedns'", tags: ["baseenv", "dnsmasq"] }
+#     - { role: kubernetes/preinstall, when: "dns_mode != 'none' and resolvconf_mode == 'host_resolvconf'", tags: ["resolvconf", "baseenv"] }
+#
+# - hosts: kube-master[0]
+#   any_errors_fatal: true
+#   roles:
+#     - { role: kargo-defaults}
+#     - { role: kubernetes-apps, tags: ["paas-apps", "apps"] }
+#
+# - hosts: openresty
+#   gather_facts: false
+#   roles:
+#     - { role: kargo-defaults }
+#     - { role: openresty, tags: ["paas-apps", "openresty"] }
+
+# - hosts: harbor
+#   gather_facts: false
+#   any_errors_fatal: true
+#   roles:
+#     - { role: kargo-defaults }
+#     - { role: harbor, tags: ["paas-apps", "harbor"] }
+
+# - hosts: k8s-cluster
+#   any_errors_fatal: true
+#   gather_facts: false
+#   roles:
+#       - { role: kargo-defaults }
+#       - { role: fluent, tags: ["paas-apps","fluent"] }

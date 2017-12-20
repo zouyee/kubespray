@@ -1,0 +1,27 @@
+---
+- name: Kubernetes Data Collection | Wrtie node exporter yaml
+  copy:
+      src: node-exporter.yml
+      dest: "{{kube_config_dir}}/node-exporter.yml"
+      mode: 0644
+
+- name: Data Collection | Check if prometheus-node-exporter svc exists
+  command: "{{ bin_dir }}/kubectl get svc prometheus-node-exporter -n {{system_namespace}}"
+  register: 'prometheusnodeexportersvc'
+  changed_when: False
+  failed_when: False
+
+- name: Data Collection | Check if prometheus-node-exporter ds exists
+  command: "{{ bin_dir }}/kubectl get ds prometheus-node-exporter -n {{system_namespace}}"
+  register: 'prometheusnodeexporterds'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes Data Collection | Start node exporter applicable
+  kube:
+      name: "node-exporter"
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{kube_config_dir}}/node-exporter.yml"
+      namespace: "{{system_namespace}}"
+  when: prometheusnodeexportersvc|failed and prometheusnodeexporterds|failed
+#  ignore_errors: yes

@@ -1,0 +1,74 @@
+# ## Configure 'ip' variable to bind kubernetes services on a
+# ## different ip than the default iface
+paasm1 ansible_ssh_host=10.132.46.133    ansible_ssh_pass=123456    ip=10.132.46.133
+paasm2 ansible_ssh_host=10.132.46.134    ansible_ssh_pass=123456    ip=10.132.46.134
+paasm3 ansible_ssh_host=10.132.46.137    ansible_ssh_pass=123456    ip=10.132.46.137
+paasn1 ansible_ssh_host=10.132.46.138    ansible_ssh_pass=123456    ip=10.132.46.138
+paasn2 ansible_ssh_host=10.132.46.144    ansible_ssh_pass=123456    ip=10.132.46.144
+paasn3 ansible_ssh_host=10.132.46.143    ansible_ssh_pass=123456    ip=10.132.46.143
+
+[kube-master]
+paasm1
+paasm2
+paasm3
+
+[etcd]
+paasm1
+paasm2
+paasm3
+
+[zookeeper]
+paasm1
+paasm2
+paasm3
+
+[kafka]
+paasm1
+paasm2
+paasm3
+
+[es]
+paasm1
+paasm2
+paasm3
+
+[logstash]
+paasm1
+paasm2
+paasm3
+
+[ingress]
+paasn1
+
+[dashboard]
+paasn1
+
+[alertmanager]
+paasm3
+
+
+[user_management]
+paasn1
+
+[openresty]
+paasn1
+
+[harbor]
+paasn3
+
+[resource-management]
+paasn2
+
+[web-ssh]
+paasm2
+
+[kube-node]
+paasn1
+paasn2
+paasn3
+
+[k8s-cluster:children]
+kube-node
+kube-master
+
+#[calico-rr]

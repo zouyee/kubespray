@@ -1,0 +1,41 @@
+---
+- name: Kubernetes mysql | copy mysql image
+  copy:
+      src: "{{ playbook_dir }}/tar/paas-apps/user_management/mysql/docker.io_mysql_5.6.tar"
+      dest: "{{paas_images_dir}}"
+      mode: 0755
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+#- name: Kubernetes paas auth | delete paas auth
+#  shell: "rm -rf /dcos/mysql"
+#  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: Kubernetes mysql | load mysql image
+  command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/docker.io_mysql_5.6.tar"
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: Kubernetes Mysql |  Write mysql yaml
+  template:
+      src: mysql.yml.j2
+      dest: "{{kube_config_dir}}/mysql.yml"
+
+- name: Kubernetes Mysql | Check if mysql svc exists
+  command: "{{ bin_dir }}/kubectl get svc mysql -n {{system_namespace}}"
+  register: 'mysqlsvc'
+  changed_when: False
+  failed_when: False
+  
+- name: Kubernetes Mysql | Check if mysql deploy exists
+  command: "{{ bin_dir }}/kubectl get deploy mysql -n {{system_namespace}}"
+  register: 'mysqldeploy'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes Mysql | Start mysql application
+  kube:
+      name: "mysql"
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{kube_config_dir}}/mysql.yml"
+      namespace: "{{system_namespace}}"
+  when: mysqlsvc|failed and mysqldeploy|failed
+#  ignore_errors: yes

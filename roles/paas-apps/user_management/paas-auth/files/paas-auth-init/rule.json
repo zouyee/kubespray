@@ -1,0 +1,737 @@
+[
+{
+	"name": "查看用户",
+	"resource": "user",
+	"action": "GET",
+	"apis": [
+		"list users",
+		"get user",
+		"list groups",
+		"get group",
+		"get authorities users",
+		"get authorities groups"
+	]
+},
+{
+	"name": "创建用户",
+	"resource": "user",
+	"action": "POST",
+	"apis": [
+		"create user",
+		"create group",
+		"check unique register"
+	]
+},
+{
+	"name": "查看概况",
+	"resource": "overview",
+	"action": "GET",
+	"apis" :[
+		"get workload",
+		"get nodes",
+		"get pods",
+		"get online users",
+		"get cpu metrics",
+		"get memory metrics",
+		"get component status"
+	]
+},
+{
+	"name": "创建应用",
+	"resource": "application",
+	"action": "POST",
+	"apis": [
+		"get deployment token",
+		"create deployment",
+		"validate app name",
+		"set hpa",
+		"get namespace",
+		"list storage class"
+	]
+},
+{
+	"name": "查看域内应用",
+	"resource": "applications",
+	"action": "GET",
+	"apis": [
+		"get user avl rules",
+		"get workload",
+		"get namespace workload",
+		"get daemonset",
+		"get application event",
+		"get services",
+		"get service",
+		"get configmap",
+		"get pod event",
+		"get hosts",
+		"get deployment",
+		"get deployment detail",
+		"get daemonset detail",
+		"get hpa"
+	]
+},
+{
+	"name": "查看应用",
+	"resource": "application",
+	"action": "GET",
+	"apis": [
+		"get user avl rules",
+		"get workload",
+		"get namespace workload",
+		"get daemonset",
+		"get application event",
+		"get services",
+		"get service",
+		"get configmap",
+		"get pod event",
+		"get hosts",
+		"get deployment",
+		"get deployment detail",
+		"get daemonset detail",
+		"get hpa"
+	]
+},
+{
+	"name": "删除应用",
+	"resource": "application",
+	"action": "DELETE",
+	"apis": [
+		"delete pod",
+		"delete deployment",
+		"delete daemonset",
+		"delete secret",
+		"delete configmap",
+		"delete replicaset",
+		"delete service",
+		"get hpa",
+		"delete hpa"
+	]
+},
+{
+	"name": "修改应用",
+	"resource": "application",
+	"action": "PUT",
+	"apis": [
+		"set hpa",
+		"update hpa",
+		"get service",
+		"update service",
+		"update secret",
+		"update configmap",
+		"update deployment",
+		"update daemonset",
+		"get namespace",
+		"list storage class"
+	]
+},
+{
+	"name": "创建配置",
+	"resource": "config",
+	"action": "POST",
+	"apis": [
+		"create secret",
+		"create configmap",
+		"get config token"
+	]
+},
+{
+	"name": "修改配置",
+	"resource": "config",
+	"action": "PUT",
+	"apis": [
+		"update secret",
+		"update configmap"
+	]
+},
+{
+	"name": "删除配置",
+	"resource": "config",
+	"action": "DELETE",
+	"apis": [
+		"delete secret",
+		"delete configmap"
+	]
+},
+{
+	"name": "查看配置",
+	"resource": "config",
+	"action": "GET",
+	"apis": [
+		"get configmap",
+		"get secret",
+		"get secret detail",
+		"get configmap detail"
+	]
+},
+{
+	"name": "查看路由",
+	"resource": "router",
+	"action": "GET",
+	"apis": [
+		"get ingress",
+		"get ingress detail"
+	]
+},
+{
+	"name": "创建路由",
+	"resource": "router",
+	"action": "POST",
+	"apis": [
+		"get ingress token",
+		"create ingress"
+	]
+},
+{
+	"name": "删除路由",
+	"resource": "router",
+	"action": "DELETE",
+	"apis": [
+		"delete ingress"
+	]
+},
+{
+	"name": "修改路由",
+	"resource": "router",
+	"action": "PUT",
+	"apis": [
+		"update ingress"
+	]
+},
+{
+	"name": "查看审计日志",
+	"resource": "audit log",
+	"action": "GET",
+	"apis": [
+		"count audit log",
+		"get audit log",
+		"get log scroll"
+	]
+},
+{
+	"name": "查看应用日志",
+	"resource": "application log",
+	"action": "GET",
+	"apis": [
+		"count application log",
+		"get application log",
+		"get hosts",
+		"get log scroll"
+	]
+},
+{
+	"name": "查看组件日志",
+	"resource": "component log",
+	"action": "GET",
+	"apis": [
+		"count component log",
+		"get component log",
+		"get hosts",
+		"get log scroll"
+	]
+},
+{
+	"name": "订阅应用日志",
+	"resource": "application log",
+	"action": "POST"
+},
+{
+	"name": "查看主机监控",
+	"resource": "host monitor",
+	"action": "GET",
+	"apis": [
+		"get node",
+		"get node detail",
+		"get component status"
+	]
+},
+{
+	"name": "查看应用监控",
+	"resource": "application monitor",
+	"action": "GET",
+	"apis": [
+		"get node",
+		"get namespace workload",
+		"get daemonset",
+		"get services",
+		"get deployment"	
+	]
+},
+{
+	"name": "查看路由监控",
+	"resource": "router monitor",
+	"action": "GET",
+	"apis": [
+		"get event"	
+	]
+},
+{
+	"name": "查看告警",
+	"resource": "alarm",
+	"action": "GET"
+},
+{
+	"name": "创建告警",
+	"resource": "alarm",
+	"action": "POST"
+},
+{
+	"name": "删除告警",
+	"resource": "alarm",
+	"action": "DELETE"
+},
+{
+	"name": "修改告警",
+	"resource": "alarm",
+	"action": "PUT"
+},
+{
+	"name": "获取主机资源",
+	"resource": "host",
+	"action": "GET",
+	"apis": [
+		"get resource"
+	]
+},
+{
+	"name": "增加主机资源",
+	"resource": "host",
+	"action": "POST",
+	"apis": [
+		"add resource"
+	]
+},
+{
+	"name": "删除主机资源",
+	"resource": "host",
+	"action": "DELETE",
+	"apis": [
+		"delete resource"
+	]
+},
+{
+	"name": "修改主机资源",
+	"resource": "host",
+	"action": "PUT",
+	"apis": [
+		"update resource"
+	]
+},
+{
+	"name": "查看集群节点信息",
+	"resource": "node",
+	"action": "GET",
+	"apis": [
+		"get resource",
+		"get node",
+		"get node detail"
+	]
+},
+{
+	"name": "增加节点",
+	"resource": "node",
+	"action": "POST"
+},
+{
+	"name": "删除节点",
+	"resource": "node",
+	"action": "DELETE",
+	"apis": [
+		"delete node"
+	]
+},
+{
+	"name": "修改节点",
+	"resource": "node",
+	"action": "PUT",
+	"apis": [
+		"get node",
+		"get raw node detail",
+		"update node"
+	]
+},
+{
+	"name": "迁移节点pod",
+	"resource": "node pod",
+	"action": "DELETE",
+	"apis": [
+		"migrate pods"
+	]
+},
+{
+	"name": "查看负载均衡器实例",
+	"resource": "ingress-controller",
+	"action": "GET",
+	"apis": [
+		"get namespace workload"
+	]
+},
+{
+	"name": "创建负载均衡器实例",
+	"resource": "ingress-controller",
+	"action": "POST",
+	"apis": [
+		"get deployment token",
+		"create deployment",
+		"get config token",
+		"create configmap",
+		"get node",
+		"get raw node detail",
+		"get nginx tmpl",
+		"update node"
+	]
+},
+{
+	"name": "更新负载均衡器实例",
+	"resource": "ingress-controller",
+	"action": "PUT",
+	"apis": [
+		"update service",
+		"update deployment",
+		"update configmap",
+		"get deployment",
+		"get nginx tmpl",
+		"get node"
+	]
+},
+{
+	"name": "删除负载均衡器实例",
+	"resource": "ingress-controller",
+	"action": "DELETE",
+	"apis": [
+		"delete service",
+		"delete configmap",
+		"delete deployment",
+		"delete replicaset"
+	]
+},
+{
+	"name": "查看域",
+	"resource": "domain",
+	"action": "GET",
+	"apis": [
+		"get namespaces",
+		"get resource quota"
+	]
+},
+{
+	"name": "创建域",
+	"resource": "domain",
+	"action": "POST",
+	"apis": [
+                "get deployment file",
+		"create namespace",
+                "create resource quota"
+	]
+},
+{
+	"name": "删除域",
+	"resource": "domain",
+	"action": "DELETE",
+	"apis": [
+		"delete namespace authority",
+		"delete namespace"	
+	]
+},
+{
+	"name": "修改域",
+	"resource": "domain",
+	"action": "PUT",
+	"apis": [
+		"get namespace",
+		"update namespace"	
+	]
+},
+{
+	"name": "查看域成员",
+	"resource": "domain member",
+	"action": "GET",
+	"apis": [
+		"get authority"
+	]
+},
+{
+	"name": "添加域成员",
+	"resource": "domain member",
+	"action": "POST",
+	"apis": [
+		"get user avl roles",
+		"get group avl roles",
+		"add authority"
+	]
+},
+{
+	"name": "删除域成员",
+	"resource": "domain member",
+	"action": "DELETE",
+	"apis": [
+		"delete authority"
+	]
+},
+{
+	"name": "修改域成员",
+	"resource": "domain member",
+	"action": "PUT",
+	"apis": [
+		"add authority",
+		"delete authority role",
+		"active authority"
+	]
+},
+{
+	"name": "修改用户",
+	"resource": "user",
+	"action": "PUT",
+	"apis": [
+		"delete group member",
+		"update user",
+		"update user password",
+		"update group",
+		"add group member",
+		"check unique register"
+	]
+},
+{
+	"name": "删除用户",
+	"resource": "user",
+	"action": "DELETE",
+	"apis": [
+		"delete user",
+		"delete group",
+		"delete user or group authority"
+	]
+},
+{
+	"name": "查看角色",
+	"resource": "role",
+	"action": "GET",
+	"apis": [
+		"list rules",
+		"list roles",
+		"get role"
+	]
+},
+{
+	"name": "添加角色",
+	"resource": "role",
+	"action": "POST",
+	"apis": [
+		"list rules",
+		"create role",
+		"add rule into role"
+	]
+},
+{
+	"name": "修改角色",
+	"resource": "role",
+	"action": "PUT",
+	"apis": [
+		"list rules",
+		"add rule into role",
+		"delete role rule",
+		"update role"
+	]
+},
+{
+	"name": "删除角色",
+	"resource": "role",
+	"action": "DELETE",
+	"apis": [
+		"delete role",
+		"delete role rule"
+	]
+},
+{
+	"name": "查看报表",
+	"resource": "report",
+	"action": "GET",
+	"apis": [
+		"get reports",
+		"get report"
+	]
+},
+{
+	"name": "创建报表",
+	"resource": "report",
+	"action": "POST",
+	"apis": [
+		"create report"
+	]
+},
+{
+	"name": "删除报表",
+	"resource": "report",
+	"action": "DELETE",
+	"apis": [
+		"delete report"
+	]
+},
+{
+	"name": "修改报表",
+	"resource": "report",
+	"action": "PUT",
+	"apis": [
+		"update report"
+	]
+},
+{
+	"name": "查看应用市场实例",
+	"resource": "appstore release",
+	"action": "GET",
+	"apis": [
+		"get appstore releases",
+		"get appstore release content",
+		"get appstore release history",
+		"get appstore release status"
+	]
+},
+{
+	"name": "新建应用市场实例",
+	"resource": "appstore release",
+	"action": "POST",
+	"apis": [
+		"get appstore releases",
+		"create appstore release"
+	]
+},
+{
+	"name": "删除应用市场实例",
+	"resource": "appstore release",
+	"action": "DELETE",
+	"apis": [
+		"get appstore releases",
+		"delete appstore release"
+	]
+},
+{
+	"name": "回滚应用市场实例",
+	"resource": "appstore release",
+	"action": "POST",
+	"apis": [
+		"get appstore releases",
+		"rollback appstore release"
+	]
+},
+{
+	"name": "查看应用市场仓库列表",
+	"resource": "appstore repository",
+	"action": "GET",
+	"apis": [
+		"get appstore repositories"
+	]
+},
+{
+	"name": "新建应用市场仓库",
+	"resource": "appstore repository",
+	"action": "POST",
+	"apis": [
+		"get appstore repositories",
+		"create appstore repository"
+	]
+},
+{
+	"name": "删除应用市场仓库",
+	"resource": "appstore repository",
+	"action": "DELETE",
+	"apis": [
+		"get appstore repositories",
+		"delete appstore repository"
+	]
+},
+{
+	"name": "获取应用市场仓库应用列表",
+	"resource": "appstore repository",
+	"action": "GET",
+	"apis": [
+		"get appstore repositories",
+		"get appstore repository charts"
+	]
+},
+{
+	"name": "获取应用市场仓库应用详情",
+	"resource": "appstore repository",
+	"action": "GET",
+	"apis": [
+		"get appstore repositories",
+		"get appstore repository charts",
+		"get appstore repository chart detail"
+	]
+},
+{
+	"name": "查看存储池",
+	"resource": "storage class",
+	"action": "GET",
+	"apis": [
+		"list storage class",
+		"get storage class"
+	]
+},
+{
+	"name": "创建存储池",
+	"resource": "storage class",
+	"action": "POST",
+	"apis": [
+		"list storage class",
+		"get storage class",
+		"create storage class"
+	]
+},
+{
+	"name": "修改存储池",
+	"resource": "storage class",
+	"action": "PUT",
+	"apis": [
+		"list storage class",
+		"get storage class",
+		"update storage class"
+	]
+},
+{
+	"name": "删除存储池",
+	"resource": "storage class",
+	"action": "DELETE",
+	"apis": [
+		"list storage class",
+		"get storage class",
+		"delete storage class"
+	]
+},
+{
+	"name": "查看动态卷",
+	"resource": "pvc",
+	"action": "GET",
+	"apis": [
+		"list pvc",
+		"get pvc"
+	]
+},
+{
+	"name": "创建动态卷",
+	"resource": "pvc",
+	"action": "POST",
+	"apis": [
+		"list pvc",
+		"get pvc",
+		"create pvc"
+	]
+},
+{
+	"name": "修改动态卷",
+	"resource": "pvc",
+	"action": "PUT",
+	"apis": [
+		"list pvc",
+		"get pvc",
+		"update pvc"
+	]
+},
+{
+	"name": "删除动态卷",
+	"resource": "pvc",
+	"action": "DELETE",
+	"apis": [
+		"list pvc",
+		"get pvc",
+		"delete pvc"
+	]
+}
+]

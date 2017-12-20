@@ -1,0 +1,1 @@
+[{% for i in groups['k8s-cluster']%}{"IP": "{{hostvars[i]['ip']}}", "hostname": "{{i}}", {% if i in groups['kube-master'] %}"role": "master"{% else %} "role": "minion"{% endif %}}{% if not loop.last %},{% endif %}{% endfor %}]

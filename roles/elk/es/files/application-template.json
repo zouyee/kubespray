@@ -1,0 +1,49 @@
+{
+    "template": "k8s-application-*",
+    "settings": {
+        "index": {
+            "refresh_interval": "5s"
+        }
+    },
+    "mappings": {
+        "_default_": {
+            "_all": {
+                "omit_norms": true,
+                "enabled": true
+            },
+            "properties": {
+                "logtime" : {
+                  "type" : "string",
+                  "index" : "not_analyzed"
+                },
+                "timestamp":{
+                  "type": "date"
+                },
+                "log":{
+                  "type" : "string",
+	          "index": "analyzed"
+                },
+                "namespace":{
+                  "type" : "string",
+	          "index": "not_analyzed"
+                },
+                "app":{
+                    "type" : "string",
+                    "index": "not_analyzed"
+                },
+                "host" : {
+                  "type" : "string",
+		  "index": "not_analyzed"
+                },
+                "pdname" : {
+                  "type" : "string",
+                  "index" : "not_analyzed"
+                },
+                "cluster" : {
+                  "type" : "string",
+                  "index" : "not_analyzed"
+                }
+            }
+        }
+    }
+}

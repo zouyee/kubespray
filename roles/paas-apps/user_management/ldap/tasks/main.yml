@@ -1,0 +1,65 @@
+---
+- name: Kubernetes LDAP | copy ldap image
+  copy:
+      src: "{{ playbook_dir }}/tar/paas-apps/user_management/ldap/docker.io_osixia_openldap_1.1.8.tar"
+      dest: "{{paas_images_dir}}"
+      mode: 0755
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: Kubernetes LDAP | load ldap image
+  command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/docker.io_osixia_openldap_1.1.8.tar"
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: Kubernetes LDAP |  Write ldap yaml
+  template:
+      src: ldap.yml.j2
+      dest: "{{kube_config_dir}}/ldap.yml"
+
+- name: Kubernetes LDAP | Check if ldap svc exists
+  command: "{{ bin_dir }}/kubectl get svc ldap-service -n {{system_namespace}}"
+  register: 'ldapsvc'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes LDAP | Check if ldap rc exists
+  command: "{{ bin_dir }}/kubectl get rc ldap-controller -n {{system_namespace}}"
+  register: 'ldaprc'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes LDAP | Start ldap application
+  kube:
+      name: "ldap"
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{kube_config_dir}}/ldap.yml"
+      namespace: "{{system_namespace}}"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  when: ldapsvc|failed and ldaprc|failed 
+
+- name: Kubernetes LDAP | find ldap container
+  shell: "docker ps | grep k8s_ldap_ldap | awk -F ' ' '{print $1}'"
+  register: ldap_container_id
+  until: "{{ldap_container_id.stdout!=\"\"}}"
+  retries: 20
+  delay: 5
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: debug container id
+  debug:
+      msg: "{{ldap_container_id}}"
+
+- name: Kubernetes LDAP | copy initldif
+  copy:
+      src: init.ldif
+      dest: "{{paas_images_dir}}"
+      mode: 0644
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: kubernetes LDAP | copy init.ldif to container
+  shell: "{{docker_bin_dir}}/docker cp {{paas_images_dir}}/init.ldif {{ldap_container_id.stdout}}:/tmp/"
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: kubernetes LDAP | copy init script to ldap container
+  shell: "{{docker_bin_dir}}/docker exec -i {{ldap_container_id.stdout}} ldapadd -x -H ldap://localhost -D cn=admin,dc=cmss,dc=com -f /tmp/init.ldif -w {{ldap_password}}"
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+  ignore_errors: yes

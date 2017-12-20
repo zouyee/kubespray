@@ -1,0 +1,57 @@
+---
+- hosts: kube-master[0]
+  any_errors_fatal: true
+  roles:
+    - { role: kargo-defaults}
+    - { role: paas-apps, tags: ["paas-apps", "apps"] }
+
+- hosts: openresty
+  gather_facts: false
+  roles:
+    - { role: kargo-defaults }
+    - { role: openresty, tags: ["paas-apps", "openresty"] }
+
+- hosts: harbor
+  gather_facts: false
+  any_errors_fatal: true
+  roles:
+    - { role: kargo-defaults }
+    - { role: harbor, tags: ["paas-apps", "harbor"] }
+
+- hosts: appstore
+  gather_facts: false
+  any_errors_fatal: true
+  roles:
+    - { role: kargo-defaults }
+    - { role: paas-apps/appstore, tags: ["paas-apps", "appstore"] }
+
+- hosts: zookeeper
+  gather_facts: false
+  roles:
+    - { role: kargo-defaults}
+    - { role: elk/zookeeper, tags: ["elk", "zookeeper"] }
+
+- hosts: kafka
+  gather_facts: false
+  roles:
+    - { role: kargo-defaults }
+    - { role: elk/kafka, tags: ["elk", "kafka"] }
+
+- hosts: logstash
+  gather_facts: false
+  roles:
+    - { role: kargo-defaults }
+    - { role: elk/logstash, tags: ["elk", "logstash"] }
+
+- hosts: es
+  gather_facts: false
+  roles:
+    - { role: kargo-defaults }
+    - { role: elk/es, tags: ["elk", "es"] }
+
+- hosts: k8s-cluster
+  any_errors_fatal: true
+  gather_facts: false
+  roles:
+      - { role: kargo-defaults }
+      - { role: fluent, tags: ["paas-apps","fluent"] }

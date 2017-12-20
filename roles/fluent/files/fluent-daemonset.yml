@@ -1,0 +1,48 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: fluentd-k8s
+  namespace: kube-system
+spec:
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      containers:
+      - name: fluentd
+        image: k8s-fluentd:v1.0
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: kube-journal
+          mountPath: /run/log/journal
+        - name: fluent-config
+          mountPath: /etc/fluent/fluent.conf
+        - name: app-log
+          mountPath: /dcos/docker/containers
+        - name: local-time
+          mountPath: /etc/localtime
+        - name: k8s-log
+          mountPath: /var/log/containers
+        - name: k8s-pods
+          mountPath: /var/log/pods
+      volumes:
+      - name: kube-journal
+        hostPath:
+          path: /run/log/journal
+      - name: fluent-config
+        hostPath:
+          path: /etc/fluent/conf/fluent.conf
+      - name: app-log
+        hostPath:
+          path: /dcos/docker/containers
+      - name: k8s-log
+        hostPath:
+          path: /var/log/containers
+      - name: local-time
+        hostPath:
+          path: /etc/localtime
+      - name: k8s-pods
+        hostPath:
+          path: /var/log/pods
+      hostNetwork: true

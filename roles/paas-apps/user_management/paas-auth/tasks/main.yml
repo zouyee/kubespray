@@ -1,0 +1,40 @@
+---
+- name: Kubernetes paas auth | copy paas auth image
+  copy:
+      src: "{{ playbook_dir }}/tar/paas-apps/user_management/paas-auth/bcpaas_paas-auth_1.0.tar"
+      dest: "{{paas_images_dir}}"
+      mode: 0755
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: Kubernetes mysql | load paas auth image
+  command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/bcpaas_paas-auth_1.0.tar"
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: Kubernetes PaaS Auth  |  Write PaaS auth yaml
+  template:
+      src: paas-auth.yml.j2
+      dest: "{{kube_config_dir}}/paas-auth.yml"
+      mode: 0644
+
+- name: Kubernetes PaaS Auth | Check if paas-auth svc exists
+  command: "{{ bin_dir }}/kubectl get svc paas-auth -n {{system_namespace}}"
+  register: 'paasauthsvc'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes PaaS Auth | Check if paas-auth configmap exists
+  command: "{{ bin_dir }}/kubectl get configmap paas-auth -n {{system_namespace}}"
+  register: 'paasauthconfigmap'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes PaaS Auth | Check if paas-auth deploy exists
+  command: "{{ bin_dir }}/kubectl get deploy paas-auth -n {{system_namespace}}"
+  register: 'paasauthdeploy'
+  changed_when: False
+  failed_when: False
+
+
+- name: Kubernetes PaaS Auth | Start paas-auth application
+  command: "{{ bin_dir }}/kubectl apply -f {{kube_config_dir}}/paas-auth.yml"
+  

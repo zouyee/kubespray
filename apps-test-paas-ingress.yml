@@ -1,0 +1,6 @@
+---
+- hosts: ingress
+  gather_facts: false
+  roles:
+    - { role: kargo-defaults}
+    - { role: paas-apps/ingress, tags: ["paas-apps", "ingress"] }

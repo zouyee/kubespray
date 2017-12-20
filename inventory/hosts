@@ -1,0 +1,75 @@
+# ## Configure 'ip' variable to bind kubernetes services on a
+# ## different ip than the default iface
+dcosdcosprovider43608 ansible_host=192.168.20.25  ansible_password=12345678 ip=192.168.20.25
+dcosdcosprovider43609 ansible_host=192.168.20.82  ansible_password=12345678 ip=192.168.20.82
+dcosdcosprovider43610 ansible_host=192.168.20.35  ansible_password=12345678 ip=192.168.20.35
+dcosdcosprovider43611 ansible_host=192.168.20.80  ansible_password=12345678 ip=192.168.20.80
+dcosdcosprovider43612 ansible_host=192.168.20.97 ansible_password=12345678 ip=192.168.20.97
+dcosdcosprovider43613 ansible_host=192.168.20.61 ansible_password=12345678 ip=192.168.20.61
+
+
+[kube-master]
+dcosdcosprovider43608
+dcosdcosprovider43609
+dcosdcosprovider43610
+
+[etcd]
+dcosdcosprovider43608
+dcosdcosprovider43609
+dcosdcosprovider43610
+
+[zookeeper]
+dcosdcosprovider43608
+dcosdcosprovider43609
+dcosdcosprovider43610
+
+[kafka]
+dcosdcosprovider43608
+dcosdcosprovider43609
+dcosdcosprovider43610
+
+[es]
+dcosdcosprovider43608
+dcosdcosprovider43609
+dcosdcosprovider43610
+
+[logstash]
+dcosdcosprovider43608
+dcosdcosprovider43609
+dcosdcosprovider43610
+
+[dashboard]
+dcosdcosprovider43611
+
+[alertmanager]
+dcosdcosprovider43610
+
+[user_management]
+dcosdcosprovider43611
+
+[openresty]
+dcosdcosprovider43611
+
+[harbor]
+dcosdcosprovider43613
+
+[resource-management]
+dcosdcosprovider43612
+
+[ingress]
+dcosdcosprovider43611
+
+[kube-node]
+dcosdcosprovider43611
+dcosdcosprovider43612
+dcosdcosprovider43613
+
+[appstore]
+paasn2
+
+[k8s-cluster:children]
+kube-node
+kube-master
+
+[web-ssh]
+dcosdcosprovider43609

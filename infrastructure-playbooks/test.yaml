@@ -1,0 +1,5 @@
+---
+- hosts: nopass
+  gather_facts: false
+  roles:
+    - { role: test}

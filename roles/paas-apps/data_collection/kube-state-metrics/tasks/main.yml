@@ -1,0 +1,28 @@
+---
+- name: Kubernetes Data Collection | Wrtie kube state metrics yaml
+  template:
+      src: kube-state-metrics.yml.j2
+      dest: "{{kube_config_dir}}/kube-state-metrics.yml"
+      mode: 0644
+
+- name: Kubernetes Data Collection | Check if kube-state-metrics svc exists
+  command: "{{ bin_dir }}/kubectl get svc kube-state-metrics -n {{system_namespace}}"
+  register: 'kubestatemetricssvc'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes Data Collection | Check if kube-state-metrics deploy exists
+  command: "{{ bin_dir }}/kubectl get deploy kube-state-metrics -n {{system_namespace}}"
+  register: 'kubestatemetricsdeploy'
+  changed_when: False
+  failed_when: False
+
+
+- name: Kubernetes Data Collection | Start kube state metrics app
+  kube:
+      name: "kube-state-metrics"
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{kube_config_dir}}/kube-state-metrics.yml"
+      namespace: "{{system_namespace}}"
+  when: kubestatemetricssvc|failed and kubestatemetricsdeploy|failed
+#  ignore_errors: yes

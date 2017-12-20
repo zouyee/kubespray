@@ -1,0 +1,24 @@
+---
+- name: Kubernetes Ingress | ensure paas images exists
+  file:
+      path: "{{paas_images_dir}}"
+      state: directory
+      mode: 0755
+  delegate_to: "{{hostvars[item]['ip']}}"
+  with_items: "{{groups['ingress']}}"
+
+- name: Kubernetes Ingress | ingress node disable
+  command: "kubectl cordon {{ item }}"
+  with_items: "{{ groups['ingress'] }}"
+
+# - name: Kubernetes Ingress | copy base images
+#   copy:
+#       src:
+#       dest:
+#   delegate_to: "{{hostvars[item]['ip']}}"
+#   with_items: "{{groups['ingress']}}"
+#
+# - name: Kubernetes Ingress | load base images
+#   command: "{{docker_bin_dir'}}/docker load -i {{paas_images_dir}}/"
+#   delegate_to: "{{hostvars[item]['ip']}}"
+#   with_items: "{{groups['ingress']}}"

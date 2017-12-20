@@ -1,0 +1,92 @@
+---
+- name: ELK | append kafka host info
+  blockinfile:
+    dest: /etc/hosts
+    block: |
+      {{hostvars[item]['ip']}}    {{item}}
+    marker: "# kafka node"
+  with_items: "{{groups['kafka']}}"
+
+- name: ELK | ensure java dir exists on zookeeper
+  file:
+      path: "{{java}}"
+      state: directory
+      mode: 0755
+
+- name: ELK | copy localrepo tar
+  copy:
+      src: "{{ playbook_dir }}/tar/elk/zookeeper/java.tar.gz"
+      dest: "{{java}}"
+      mode: 0755
+
+- name: ELK | unarchive localrepo
+  shell: "tar -zxvf {{java}}/java.tar.gz -C {{java}}"
+
+- name: ELK | install java jdk
+  shell: "yum localinstall -y  {{java}}/java/*.rpm"
+
+- name: ELK | copy kafka package
+  copy:
+      src: "{{ playbook_dir }}/tar/elk/zookeeper/kafka.tar.gz"
+      dest: "/opt"
+      mode: 0755
+
+- name: ELK | ensuer kafka rpm dir exists
+  file:
+      path: /opt/kafka
+      state: directory
+      mode: 0555
+
+- name: ELK | unarchive kafka package
+  shell: "tar -zxvf /opt/kafka.tar.gz -C /opt"
+
+- name: ELK | check for permission
+  shell: "chmod -R 755 /opt/kafka_2.11-0.8.2.1"
+
+- name: ELK | copy zookeeper config
+  copy:
+      src: log4j.properties
+      dest: /opt/kafka/config
+      mode: 0555
+
+- name: ELK | ensure bclinx log
+  file:
+      path: /dcos/log
+      state: directory
+      mode: 0755
+
+- name: ELK | ensure kafka log exists
+  file:
+      path: "{{kafka_logs}}"
+      state: directory
+      mode: 0755
+
+- name: ELK | gen zookeeper properties
+  template:
+      src: zookeeper.properties.j2
+      dest: /opt/kafka_2.11-0.8.2.1/config/zookeeper.properties
+      mode: 0555
+
+- name: ELK | ensure zookeeper myid parent directory
+  file:
+      path: "{{ zookeeper_myid_parent_dir}}"
+      state: directory
+      mode: 0555
+
+- name: ELK | gen zookeeper myid
+  template:
+      src: myid.j2
+      dest: "{{zookeeper_myid_parent_dir}}/myid"
+      mode: 0755
+
+- name: ELK | copy zookeeper.service
+  copy:
+      src: zookeeper.service
+      dest: /etc/systemd/system
+      mode: 0755
+
+- name: ELK | enable and start zookeeper service
+  service:
+      name: zookeeper
+      enabled: yes
+      state: started

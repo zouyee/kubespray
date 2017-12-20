@@ -1,0 +1,9 @@
+dataDir={{zookeeper_myid_parent_dir}}
+clientPort={{zookeeper_port}}
+maxClientCnxns=0
+tickTime=2000
+initLimit=5
+syncLimit=2
+{% for item in groups["zookeeper"] %}
+server.{{loop.index}}={{hostvars[item]['ip']}}:2888:3888
+{% endfor %}

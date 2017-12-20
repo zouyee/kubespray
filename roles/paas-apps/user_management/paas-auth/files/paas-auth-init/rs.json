@@ -1,0 +1,712 @@
+[
+  {
+    "name": "get nodes",
+    "resource": "/conductor/api/v1/node",
+    "action": "GET"
+  },
+  {
+    "name": "get cpu metrics",
+    "resource": "/conductor/api/v1/metrics/cpu/request",
+    "action": "GET"
+  },
+  {
+    "name": "get memory metrics",
+    "resource": "/conductor/api/v1/metrics/memory/request",
+    "action": "GET"
+  },
+  {
+    "name": "get pods",
+    "resource": "/conductor/api/v1/pod",
+    "action": "GET"
+  },
+  {
+    "name": "get pod",
+    "resource": "/conductor/api/v1/_raw/pod/namespace/.*/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "delete pod",
+    "resource": "/conductor/api/v1/_raw/pod/namespace/.*/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "get pod event",
+    "resource": "/conductor/api/v1/pod/.*/.*/event",
+    "action": "GET"
+  },
+  {
+    "name": "get workload",
+    "resource": "/conductor/api/v1/workload",
+    "action": "GET"
+  },
+  {
+    "name": "get component status",
+    "resource": "/conductor/api/v1/_raw/componentstatus",
+    "action": "GET"
+  },
+  {
+    "name": "get online users",
+    "resource": "/apis/cmss.com/v1/onlineusers",
+    "action": "GET"
+  },
+  {
+    "name": "get namespace workload",
+    "resource": "/conductor/api/v1/workload/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get deployment",
+    "resource": "/conductor/api/v1/deployment/.*/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get daemonset",
+    "resource": "/conductor/api/v1/daemonset/.*/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get configmap",
+    "resource": "/conductor/api/v1/_raw/configmap/namespace/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get configmap detail",
+    "resource": "/conductor/api/v1/_raw/configmap/namespace/.*/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "create configmap",
+    "resource": "/conductor/api/v1/_raw/configmap/namespace/.*",
+    "action": "POST"
+  },
+  {
+    "name": "update configmap",
+    "resource": "/conductor/api/v1/_raw/configmap/namespace/.*/name/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "delete configmap",
+    "resource": "/conductor/api/v1/_raw/configmap/namespace/.*/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "get secret",
+    "resource": "/conductor/api/v1/_raw/secret/namespace/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get secret detail",
+    "resource": "/conductor/api/v1/_raw/secret/namespace/.*/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "create secret",
+    "resource": "/conductor/api/v1/_raw/secret/namespace/.*",
+    "action": "POST"
+  },
+  {
+    "name": "update secret",
+    "resource": "/conductor/api/v1/_raw/secret/namespace/.*/name/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "delete secret",
+    "resource": "/conductor/api/v1/_raw/secret/namespace/.*/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "get config token",
+    "resource": "/conductor/api/v1/csrftoken/config",
+    "action": "GET"
+  },
+  {
+    "name": "get daemonset detail",
+    "resource": "/conductor/api/v1/_raw/daemonset/namespace/.*/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get deployment detail",
+    "resource": "/conductor/api/v1/_raw/deployment/namespace/.*/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get application event",
+    "resource": "/conductor/api/v1/replicaset/.*/.*/event",
+    "action": "GET"
+  },
+  {
+    "name": "get ingress",
+    "resource": "/conductor/api/v1/_raw/ingress/namespace/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get ingress token",
+    "resource": "/conductor/api/v1/csrftoken/ingress",
+    "action": "GET"
+  },
+  {
+    "name": "create ingress",
+    "resource": "/conductor/api/v1/_raw/ingress/namespace/.*",
+    "action": "POST"
+  },
+  {
+    "name": "get ingress detail",
+    "resource": "/conductor/api/v1/_raw/ingress/namespace/.*/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "delete ingress",
+    "resource": "/conductor/api/v1/_raw/ingress/namespace/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "update ingress",
+    "resource": "/conductor/api/v1/_raw/ingress/namespace/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "get services",
+    "resource": "/conductor/api/v1/service/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get service",
+    "resource": "/conductor/api/v1/_raw/service/namespace/.*/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "validate app name",
+    "resource": "/conductor/api/v1/appdeployment/validate/name",
+    "action": "POST"
+  },
+  {
+    "name": "get deployment token",
+    "resource": "/conductor/api/v1/csrftoken/appdeploymentfromfile",
+    "action": "GET"
+  },
+  {
+    "name": "create deployment",
+    "resource": "/conductor/api/v1/appdeploymentfromfile",
+    "action": "POST"
+  },
+  {
+    "name": "get deployment file",
+    "resource": "/conductor/api/v1/csrftoken/appdeploymentfromfile",
+    "action": "GET"
+  },
+  {
+    "name": "delete deployment",
+    "resource": "/conductor/api/v1/_raw/deployment/namespace/.*/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "delete replicaset",
+    "resource": "/conductor/api/v1/_raw/replicaset/namespace/.*/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "update deployment",
+    "resource": "/conductor/api/v1/_raw/deployment/namespace/.*/name/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "delete daemonset",
+    "resource": "/conductor/api/v1/_raw/daemonset/namespace/.*/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "update daemonset",
+    "resource": "/conductor/api/v1/_raw/daemonset/namespace/.*/name/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "update service",
+    "resource": "/conductor/api/v1/_raw/service/namespace/.*/name/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "delete service",
+    "resource": "/conductor/api/v1/_raw/service/namespace/.*/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "update hpa",
+    "resource": "/conductor/api/v1/_raw/horizontalpodautoscaler/namespace/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "delete hpa",
+    "resource": "/conductor/api/v1/_raw/horizontalpodautoscaler/namespace/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "set hpa",
+    "resource": "/conductor/api/v1/_raw/horizontalpodautoscaler/namespace/.*",
+    "action": "POST"
+  },
+  {
+    "name": "get hpa",
+    "resource": "/conductor/api/v1/_raw/horizontalpodautoscaler/namespace/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get hosts",
+    "resource": "/dcos-metadata/k8s-hosts.json",
+    "action": "GET"
+  },
+  {
+    "name": "get audit log",
+    "resource": "/logmanage/k8s-audit/.*/_search",
+    "action": "POST"
+  },
+  {
+    "name": "count audit log",
+    "resource": "/logmanage/k8s-audit/.*/_count",
+    "action": "POST"
+  },
+  {
+    "name": "get component log",
+    "resource": "/logmanage/k8s-kube/.*/_search",
+    "action": "POST"
+  },
+  {
+    "name": "count component log",
+    "resource": "/logmanage/k8s-kube/.*/_count",
+    "action": "POST"
+  },
+  {
+    "name": "get application log",
+    "resource": "/logmanage/k8s-application/.*/_search",
+    "action": "POST"
+  },
+  {
+    "name": "count application log",
+    "resource": "/logmanage/k8s-application/.*/_count",
+    "action": "POST"
+  },
+  {
+    "name": "get log scroll",
+    "resource": "/logmanage/_search/scroll",
+    "action": "GET"
+  },
+  {
+    "name": "get event",
+    "resource": "/conductor/api/v1/namespace/.*/event",
+    "action": "GET"
+  },
+  {
+    "name": "get resource",
+    "resource": "/resource/api/v1/resource/",
+    "action": "GET"
+  },
+  {
+    "name": "get node",
+    "resource": "/conductor/api/v1/_raw/node",
+    "action": "GET"
+  },
+  {
+    "name": "get raw node detail",
+    "resource": "/conductor/api/v1/_raw/node/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "update node",
+    "resource": "/conductor/api/v1/_raw/node/name/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "delete node",
+    "resource": "/conductor/api/v1/_raw/node/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "get node detail",
+    "resource": "/conductor/api/v1/node/.*",
+    "action": "GET"
+  },
+  {
+    "name": "update resource",
+    "resource": "/resource/api/v1/resource/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "get resource quota",
+    "resource": "/conductor/api/v1/_raw/resourcequota",
+    "action": "GET"
+  },
+  {
+    "name": "get nginx tmpl",
+    "resource": "/dcos-metadata/nginx.tmpl",
+    "action": "GET"
+  },
+  {
+    "name": "get namespaces",
+    "resource": "/conductor/api/v1/_raw/namespace",
+    "action": "GET"
+  },
+  {
+    "name": "get namespace",
+    "resource": "/conductor/api/v1/_raw/namespace/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "create namespace",
+    "resource": "/conductor/api/v1/_raw/namespace",
+    "action": "POST"
+  },
+  {
+    "name": "update namespace",
+    "resource": "/conductor/api/v1/_raw/namespace/name/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "create resource quota",
+    "resource": "/conductor/api/v1/_raw/resourcequota/namespace/.*",
+    "action": "POST"
+  },
+  {
+    "name": "update resource quota",
+    "resource": "/conductor/api/v1/_raw/resourcequota/namespace/.*/name/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "delete resource quota",
+    "resource": "/conductor/api/v1/_raw/resourcequota/namespace/.*/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "delete namespace",
+    "resource": "/conductor/api/v1/_raw/namespace/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "add resource",
+    "resource": "/resource/api/v1/resource/.*",
+    "action": "POST"
+  },
+  {
+    "name": "delete resource",
+    "resource": "/resource/api/v1/resource/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "migrate pods",
+    "resource": "/conductor/api/v1/namespaces/.*/pods/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "list users",
+    "resource": "/apis/cmss.com/v1/users",
+    "action": "GET"
+  },
+  {
+    "name": "get user",
+    "resource": "/apis/cmss.com/v1/user/.*",
+    "action": "GET"
+  },
+  {
+    "name": "list groups",
+    "resource": "/apis/cmss.com/v1/groups",
+    "action": "GET"
+  },
+  {
+    "name": "get group",
+    "resource": "/apis/cmss.com/v1/group/.*",
+    "action": "GET"
+  },
+  {
+    "name": "list rules",
+    "resource": "/apis/cmss.com/v1/rules",
+    "action": "GET"
+  },
+  {
+    "name": "list roles",
+    "resource": "/apis/cmss.com/v1/roles",
+    "action": "GET"
+  },
+  {
+    "name": "get role",
+    "resource": "/apis/cmss.com/v1/role/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get authority",
+    "resource": "/apis/cmss.com/v1/authority",
+    "action": "GET"
+  },
+  {
+    "name": "get user avl roles",
+    "resource": "/apis/cmss.com/v1/user/.*/avlroles",
+    "action": "GET"
+  },
+  {
+    "name": "get user avl rules",
+    "resource": "/apis/cmss.com/v1/user/.*/avlrules",
+    "action": "GET"
+  },
+  {
+    "name": "get group avl roles",
+    "resource": "/apis/cmss.com/v1/group/.*/avlroles",
+    "action": "GET"
+  },
+  {
+    "name": "get group avl users",
+    "resource": "/apis/cmss.com/v1/group/.*/avlusers",
+    "action": "GET"
+  },
+  {
+    "name": "create user",
+    "resource": "/apis/cmss.com/v1/user",
+    "action": "POST"
+  },
+  {
+    "name": "create group",
+    "resource": "/apis/cmss.com/v1/group",
+    "action": "POST"
+  },
+  {
+    "name": "create role",
+    "resource": "/apis/cmss.com/v1/role",
+    "action": "POST"
+  },
+  {
+    "name": "add rule into role",
+    "resource": "/apis/cmss.com/v1/role/.*/rule",
+    "action": "POST"
+  },
+  {
+    "name": "add authority",
+    "resource": "/apis/cmss.com/v1/authority",
+    "action": "POST"
+  },
+  {
+    "name": "delete user",
+    "resource": "/apis/cmss.com/v1/user/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "delete group",
+    "resource": "/apis/cmss.com/v1/group/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "delete user groups",
+    "resource": "/apis/cmss.com/v1/user/.*/groups",
+    "action": "DELETE"
+  },
+  {
+    "name": "delete group member",
+    "resource": "/apis/cmss.com/v1/group/.*/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "delete role",
+    "resource": "/apis/cmss.com/v1/role/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "delete role rule",
+    "resource": "/apis/cmss.com/v1/role/.*/rule/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "delete authority",
+    "resource": "/apis/cmss.com/v1/authority/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "delete authority role",
+    "resource": "/apis/cmss.com/v1/authority/.*/role/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "delete user or group authority",
+    "resource": "/apis/cmss.com/v1/object/.*/.*/authority",
+    "action": "DELETE"
+  },
+  {
+    "name": "delete namespace authority",
+    "resource": "/apis/cmss.com/v1/conditions/authority",
+    "action": "DELETE"
+  },
+  {
+    "name": "update user",
+    "resource": "/apis/cmss.com/v1/user/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "update user password",
+    "resource": "/apis/cmss.com/v1/user/.*/password",
+    "action": "PUT"
+  },
+  {
+    "name": "update group",
+    "resource": "/apis/cmss.com/v1/group/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "add group member",
+    "resource": "/apis/cmss.com/v1/group/.*/member",
+    "action": "POST"
+  },
+  {
+    "name": "update role",
+    "resource": "/apis/cmss.com/v1/role/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "active authority",
+    "resource": "/apis/cmss.com/v1/authority/.*/active/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "check unique register",
+    "resource": "/apis/cmss.com/v1/unireg",
+    "action": "POST"
+  },
+  {
+    "name": "get reports",
+    "resource": "/report/namespace/.*/username/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get report",
+    "resource": "/report/namespace/.*/username/.*/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "update report",
+    "resource": "/report/namespace/.*/username/.*/name/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "delete report",
+    "resource": "/report/namespace/.*/username/.*/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "create report",
+    "resource": "/report/namespace/.*/username/.*",
+    "action": "POST"
+  },
+  {
+    "name": "get authorities users",
+    "resource": "/apis/cmss.com/v1/authorities/users",
+    "action": "GET"
+  },
+  {
+    "name": "get authorities groups",
+    "resource": "/apis/cmss.com/v1/authorities/groups",
+    "action": "GET"
+  },
+  {
+    "name": "get appstore releases",
+    "resource": "/v1/helm/releases",
+    "action": "GET"
+  },
+  {
+    "name": "create appstore release",
+    "resource": "/v1/helm/releases",
+    "action": "POST"
+  },
+  {
+    "name": "delete appstore release",
+    "resource": "/v1/helm/releases/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "get appstore release content",
+    "resource": "/v1/helm/releases/.*/content",
+    "action": "GET"
+  },
+  {
+    "name": "get appstore release history",
+    "resource": "/v1/helm/releases/.*/history",
+    "action": "GET"
+  },
+  {
+    "name": "rollback appstore release",
+    "resource": "/v1/helm/releases/.*/rollback",
+    "action": "POST"
+  },
+  {
+    "name": "get appstore release status",
+    "resource": "/v1/helm/releases/.*/status",
+    "action": "GET"
+  },
+  {
+    "name": "get appstore repositories",
+    "resource": "/v1/helm/repositories",
+    "action": "GET"
+  },
+  {
+    "name": "create appstore repository",
+    "resource": "/v1/helm/repositories",
+    "action": "POST"
+  },
+  {
+    "name": "delete appstore repository",
+    "resource": "/v1/helm/repositories/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "get appstore repository charts",
+    "resource": "/v1/helm/repositories/.*/charts",
+    "action": "GET"
+  },
+  {
+    "name": "get appstore repository chart detail",
+    "resource": "/v1/helm/repositories/.*/charts/.*",
+    "action": "GET"
+  },
+  {
+    "name": "list storage class",
+    "resource": "/conductor/api/v1/_raw/storageclass",
+    "action": "GET"
+  },
+  {
+    "name": "get storage class",
+    "resource": "/conductor/api/v1/_raw/storageclass/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "create storage class",
+    "resource": "/conductor/api/v1/_raw/storageclass/",
+    "action": "POST"
+  },
+  {
+    "name": "update storage class",
+    "resource": "/conductor/api/v1/_raw/storageclass/name/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "delete storage class",
+    "resource": "/conductor/api/v1/_raw/storageclass/name/.*",
+    "action": "DELETE"
+  },
+  {
+    "name": "list pvc",
+    "resource": "/conductor/api/v1/_raw/persistentvolumeclaim/namespace/.*",
+    "action": "GET"
+  },
+  {
+    "name": "get pvc",
+    "resource": "/conductor/api/v1/_raw/persistentvolumeclaim/namespace/.*/name/.*",
+    "action": "GET"
+  },
+  {
+    "name": "create pvc",
+    "resource": "/conductor/api/v1/_raw/persistentvolumeclaim/namespace/.*",
+    "action": "POST"
+  },
+  {
+    "name": "update pvc",
+    "resource": "/conductor/api/v1/_raw/persistentvolumeclaim/namespace/.*/name/.*",
+    "action": "PUT"
+  },
+  {
+    "name": "delete pvc",
+    "resource": "/conductor/api/v1/_raw/persistentvolumeclaim/namespace/.*/name/.*",
+    "action": "DELETE"
+  }
+]

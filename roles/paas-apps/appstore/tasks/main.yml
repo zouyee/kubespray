@@ -1,0 +1,196 @@
+---
+- name: Appstore | Ensure appstore dir exists
+  file:
+      path: "{{ appstore_files_dir }}"
+      state: directory
+      mode: 0755
+
+- name: Appstore | Ensure appstore dir exists in master
+  file:
+      path: "{{ appstore_files_dir }}"
+      state: directory
+      mode: 0755
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Copy appstore install files
+  copy:
+    src: "{{ playbook_dir }}/tar/paas-apps/appstore/"
+    dest: "{{ appstore_files_dir }}/"
+    mode: 0755
+
+- name: Appstore | Extract helm bin
+  command: "{{ docker_bin_dir }}/tar -zxf helm-v2.7.2-linux-amd64.tar.gz"
+  args:
+    chdir: "{{ appstore_files_dir }}/app-backend"
+
+- name: Appstore | Move helm binary to executable path
+  command: " mv linux-amd64/helm {{ bin_dir }}"
+  args:
+    chdir: "{{ appstore_files_dir }}/app-backend"
+
+- name: Appstore | Load nginx image for app-repo
+  command: "{{ docker_bin_dir }}/docker load -i {{ appstore_files_dir }}/app-repo/nginx_1.13.5-alpine.tar"
+
+# chart repo has it's specific url with node's IP and that is why helm binary is needed.
+- name: Appstore | Index charts of app-repo
+  command: "{{ bin_dir }}/helm repo index --url=http://{{ hostvars[groups['appstore'][0]]['ip'] }}:32135/charts ."
+  args:
+    chdir: "{{ appstore_files_dir}}/app-repo/charts"
+
+# app-repo is the repository which saves the charts and
+# it's service listens node port 32135.
+- name: Appstore | Write app-repo yaml
+  template:
+    src: app-repo.yaml.j2
+    dest: "{{ appstore_files_dir }}/app-repo.yaml"
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Check if svc app-repo exists
+  command: "{{ bin_dir }}/kubectl get service app-repo -n kube-system"
+  register: 'appsvcrepo'
+  changed_when: False
+  failed_when: False
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Run app-repo
+  kube:
+    name: "app-repo"
+    kubectl: "{{ bin_dir }}/kubectl"
+    filename: "{{ appstore_files_dir }}/app-repo.yaml"
+    namespace: "{{ system_namespace }}"
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+  when: appsvcrepo|failed
+
+- name: Appstore | Load tiller image
+  command: "{{ docker_bin_dir }}/docker load -i {{ appstore_files_dir }}/app-backend/tiller_v2.7.2.tar"
+
+- name: Appstore | Load app-backend image
+  command: "{{ docker_bin_dir }}/docker load -i {{ appstore_files_dir }}/app-backend/app-backend_1.1.0.tar"
+
+# To install tiller, helm must communicate with k8s.
+# Make sure helm binary exists in one of master nodes.
+- name: Appstore | Ensure appstore backend dir exists in master
+  file:
+      path: "{{ appstore_files_dir }}/app-backend"
+      state: directory
+      mode: 0755
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Copy helm tar files to master
+  copy:
+    src: "{{ playbook_dir }}/tar/paas-apps/appstore/app-backend/helm-v2.7.2-linux-amd64.tar.gz"
+    dest: "{{ appstore_files_dir }}/app-backend"
+    mode: 0755
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Extract helm bin in master
+  command: "{{ docker_bin_dir }}/tar -zxf helm-v2.7.2-linux-amd64.tar.gz"
+  args:
+    chdir: "{{ appstore_files_dir }}/app-backend"
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Move helm binary to executable path in master
+  command: " mv linux-amd64/helm {{ bin_dir }}"
+  args:
+    chdir: "{{ appstore_files_dir }}/app-backend"
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+# Init tiller in master node but tiller service will not run becase not every node
+# has tiller image so the tiller deployment will be patched with specific "nodeName"
+# in next few steps. There sets "nodeName" to the second node of kube-node.
+- name: Appstore | Init tiller in master
+  command: "{{ bin_dir }}/helm init --tiller-image gcr.io/kubernetes-helm/tiller:v2.7.2 --stable-repo-url http://{{ hostvars[groups['appstore'][0]]['ip'] }}:32135/charts"
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Check if servicaccount tiller exists
+  command: "{{ bin_dir }}/kubectl get serviceaccount tiller -n kube-system"
+  register: 'apptillersvcaccount'
+  changed_when: False
+  failed_when: False
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Check if clusterolebinding tiller exists
+  command: "{{ bin_dir }}/kubectl get clusterrolebinding tiller -n kube-system"
+  register: 'apptillerbinding'
+  changed_when: False
+  failed_when: False
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+# Set tiller RBAC
+- name: Appstore | Create serviceaccount tiller if it does not exist
+  shell: "kubectl -n kube-system create serviceaccount tiller"
+  when: apptillersvcaccount|failed
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Create clusterrolebinding tiller if it does not exist
+  shell: "kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller"
+  when: apptillerbinding|failed
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Patch tiller-deploy in master to node name
+  shell: "kubectl -n kube-system patch deploy/tiller-deploy -p '{\"spec\": {\"replicas\": 3, \"template\": {\"spec\": {\"serviceAccountName\": \"tiller\", \"nodeName\": \"{{ hostvars[groups['appstore'][0]]['inventory_hostname'] }}\"}}}}'"
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Patch tiller-deploy service to expose nodeport
+  shell: "kubectl -n kube-system patch service tiller-deploy -p '{\"spec\": {\"type\": \"NodePort\"}}'"
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Patch tiller-deploy service to expose specific port
+  shell: "kubectl -n kube-system patch service tiller-deploy -p '{\"spec\": {\"ports\": [{\"port\": 44134, \"nodePort\": 32134}]}}'"
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+# This directory is created by "helm init" command and it saves
+# repository info. app-backend service needs it to run so it
+# is copied from master to node.
+- name: Appstore | Copy /root/.helm from master to kargo
+  local_action: "shell rsync -avz -e 'sshpass -p {{ ansible_password }} ssh -p 22 -o StrictHostKeyChecking=no' {{ ansible_user }}@{{hostvars[groups['kube-master'][1]]['ip']}}:/root/.helm /tmp/"
+
+- name: Appstore | Copy /root/.helm from kargo to node
+  local_action: "shell rsync -avz -e 'sshpass -p {{ ansible_password }} ssh -p 22 -o StrictHostKeyChecking=no' /tmp/.helm {{ ansible_user }}@{{hostvars[groups['appstore'][0]]['ip']}}:/root/"
+
+- name: Appstore | Write app-backend yaml
+  template:
+    src: app-backend.yaml.j2
+    dest: "{{ appstore_files_dir }}/app-backend.yaml"
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+- name: Appstore | Check if svc app-backend exists
+  command: "{{ bin_dir }}/kubectl get service app-backend -n kube-system"
+  register: 'appsvcbackend'
+  changed_when: False
+  failed_when: False
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+
+# app-backend's service listens node port 32136.
+- name: Appstore | Run app-backend
+  kube:
+    name: "app-backend"
+    kubectl: "{{ bin_dir }}/kubectl"
+    filename: "{{ appstore_files_dir }}/app-backend.yaml"
+    namespace: "{{ system_namespace }}"
+  delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
+  when: appsvcbackend|failed
+
+# FIXME
+# Next two steps should be merged in auth deployment.
+- name: Appstore | Copy appstore auth json files
+  copy:
+    src: auth-init
+    dest: "{{ appstore_files_dir }}/app-backend"
+    mode: 0755
+
+- name: Appstore | Copy appstore auth sript
+  template:
+    src: app-init.sh.j2
+    dest: "{{ appstore_files_dir }}/app-backend/auth-init/app-init.sh"
+    mode: 0755
+
+- name: Appstore | Init appstore auth
+  command: "bash app-init.sh"
+  args:
+    chdir: "{{appstore_files_dir}}/app-backend/auth-init"
+
+### TODO
+##- name: Appstore | Upload chart images to Harbor
+##  command: ""
+#

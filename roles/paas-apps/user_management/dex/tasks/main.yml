@@ -1,0 +1,63 @@
+---
+- name: Ensure paas images dir
+  file:
+      path: "{{paas_images_dir}}"
+      state: directory
+      mode: 0755
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+#  ignore_errors: yes
+
+- name: Kubernetes Dex | copy dex images
+  copy:
+      src: "{{ playbook_dir }}/tar/paas-apps/user_management/dex/quay.io_coreos_dex_v2.7.1.tar"
+      dest: "{{paas_images_dir}}"
+      mode: 0755
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: Kubernetes Dex | load dex image
+  command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/quay.io_coreos_dex_v2.7.1.tar"
+  delegate_to: "{{hostvars[groups['user_management'][0]]['ip']}}"
+
+- name: Kubernetes Dex | Check if secret exists
+  command: "{{ bin_dir }}/kubectl get secret {{secretName}} -n {{system_namespace}}"
+  register: 'secretname'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes Dex | create secret name
+  command: "kubectl create secret tls {{secretName}} --cert /etc/kubernetes/ssl/apiserver.pem --key /etc/kubernetes/ssl/apiserver-key.pem -n kube-system"
+  when: secretname|failed
+#  ignore_errors: yes
+
+- name: Kubernetes Dex | Write dex yaml
+  template:
+      src: dex.yml.j2
+      dest: "{{kube_config_dir}}/dex.yml"
+      mode: 0644
+
+- name: Kubernetes Dex | Check if dex svc exists
+  command: "{{ bin_dir }}/kubectl get svc dex -n {{system_namespace}}"
+  register: 'dexsvc'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes Dex | Check if dex configmap exists
+  command: "{{ bin_dir }}/kubectl get configmap dex -n {{system_namespace}}"
+  register: 'dexconfigmap'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes Dex | Check if dex deploy exists
+  command: "{{ bin_dir }}/kubectl get deploy dex -n {{system_namespace}}"
+  register: 'dexdeploy'
+  changed_when: False
+  failed_when: False
+
+- name: Kubernetes Dex | Start dex application
+  kube:
+      name: "dex"
+      kubectl: "{{bin_dir}}/kubectl"
+      filename: "{{kube_config_dir}}/dex.yml"
+      namespace: "{{system_namespace}}"
+  when: dexsvc|failed and dexdeploy|failed and dexconfigmap|failed
+#  ignore_errors: yes

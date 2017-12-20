@@ -1,0 +1,99 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: paas-auth
+  name: paas-auth
+  namespace: kube-system
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: paas-auth
+    spec:
+      containers:
+      - image: bcpaas/auth:1.2
+        imagePullPolicy: IfNotPresent
+        name: paas-auth
+        command: ["/usr/local/bin/auth", "serve", "/etc/paas-auth/config.yaml"]
+        ports:
+        - name: paas-auth
+          containerPort: 5559
+        volumeMounts:
+        - name: config
+          mountPath: /etc/paas-auth
+      volumes:
+      - name: config
+        configMap:
+          name: paas-auth
+          items:
+          - key: config.yaml
+            path: config.yaml
+      nodeSelector:
+        kubernetes.io/hostname: {{groups['user_management'][0]}}
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: paas-auth
+  namespace: kube-system
+data:
+  config.yaml: |
+    storage:
+      type: mysql
+      config:
+        host: mysql.kube-system.svc.cluster.local
+        port: "3306"
+        user: root
+        password: "{{ldap_password}}"
+    dex:
+      uri: http://{{hostvars[groups['kube-master'][0]]['ip']}}:32002
+      issuer: https://{{hostvars[groups['kube-master'][0]]['ip']}}:32000
+    auth:
+      type: ldap
+      config:
+        host: ldap-service.kube-system.svc.cluster.local:389
+        insecureNoSSL: true
+        bindDN: cn=admin,dc=cmss,dc=com
+        bindPW: "{{ldap_password}}"
+        userSearch:
+          baseDN: ou=users,dc=cmss,dc=com
+          filter: "(objectClass=inetOrgPerson)"
+          scope: sub
+          idAttr: cn
+          emailAttr: mail
+          descAttr: description
+        groupSearch:
+          baseDN: ou=groups,dc=cmss,dc=com
+          filter: "(objectClass=groupOfNames)"
+          scope: sub
+          idAttr: cn
+          groupAttr: member
+          descAttr: description
+    sysAdmin:
+      username: admin
+      password: {{paas_auth_pw}}
+      email: admin@chinamobile.com
+      role: admin
+      group: admin
+    listen: 0.0.0.0:5559
+    logger:
+      level: debug
+      format: json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paas-auth
+  namespace: kube-system
+spec:
+  type: NodePort
+  ports:
+  - name: paas-auth
+    port: 5559
+    protocol: TCP
+    targetPort: 5559
+    nodePort: 32045
+  selector:
+    app: paas-auth

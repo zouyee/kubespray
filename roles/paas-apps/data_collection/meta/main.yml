@@ -1,0 +1,6 @@
+dependencies:
+  - role: paas-apps/data_collection/grafana
+  - role: paas-apps/data_collection/heapster
+  - role: paas-apps/data_collection/influxdb
+  - role: paas-apps/data_collection/node-exporter
+  - role: paas-apps/data_collection/kube-state-metrics

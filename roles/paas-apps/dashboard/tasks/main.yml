@@ -1,0 +1,42 @@
+---
+- name: Paas images | ensure paas images dir exists
+  file:
+      path: "{{paas_images_dir}}"
+      state: directory
+      mode: 0755
+  delegate_to: "{{hostvars[groups['dashboard'][0]]['ip']}}"
+#  ignore_errors: yes
+
+- name: Kubernetes Dashboard | copy dashboard image
+  copy:
+      src: "{{ playbook_dir }}/tar/paas-apps/dashboard/kubernetes-backend.tar"
+      dest: "{{paas_images_dir}}"
+      mode: 0755
+  delegate_to: "{{hostvars[groups['dashboard'][0]]['ip']}}"
+
+- name: Kubernetes Dashboard | load dashboard image
+  command: "{{ docker_bin_dir}}/docker load -i {{ paas_images_dir }}/kubernetes-backend.tar"
+  delegate_to: "{{hostvars[groups['dashboard'][0]]['ip']}}"
+
+- name: Kubernetes Dashboard | Write kubernetes dashboard yaml
+  template:
+      src:  kubernetes-dashboard.yml.j2
+      dest: "{{kube_config_dir}}/kubernetes-dashboard.yml"
+      mode: 0644
+
+- name: Kubernetes Dashboard | Check if kubernetes-dashboard svc exists
+  command: "{{ bin_dir }}/kubectl get svc kubernetes-dashboard -n {{system_namespace}}"
+  register: 'kubernetesdashboardsvc'
+  changed_when: False
+  failed_when: False
+  
+- name: Kubernetes Dashboard | Check if kubernetes-dashboard deploy exists
+  command: "{{ bin_dir }}/kubectl get deploy kubernetes-dashboard -n {{system_namespace}}"
+  register: 'kubernetesdashboarddeploy'
+  changed_when: False
+  failed_when: False
+
+
+- name: Kubernetes Dashboard | Start kubernetes dashboard app
+  command: "{{bin_dir}}/kubectl apply -f {{kube_config_dir}}/kubernetes-dashboard.yml"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"

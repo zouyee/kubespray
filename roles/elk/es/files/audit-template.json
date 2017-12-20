@@ -1,0 +1,52 @@
+{
+    "template": "k8s-audit",
+    "settings": {
+        "index": {
+            "refresh_interval": "5s"
+        }
+    },
+    "mappings": {
+        "_default_": {
+            "properties": {
+                "time" : {
+                  "type" : "string",
+                  "index" : "not_analyzed"
+                },
+                "timestamp":{
+                  "type": "date"
+                },
+                "token":{
+                  "type" : "string",
+	          "index": "not_analyzed"
+                },
+                "optype":{
+                  "type" : "string",
+                  "index": "not_analyzed"
+                },
+                "opobj":{
+                  "type" : "string",
+                  "index": "not_analyzed"
+                },
+                "detail":{
+                  "type" : "string",
+                  "index": "not_analyzed"
+                },
+                "status":{
+                  "type" : "string",
+                  "index": "not_analyzed"
+                },
+                "lasttime" : {
+                  "type" : "float"
+                },
+                "cluster" : {
+                  "type" : "string",
+                  "index" : "not_analyzed"
+                },
+                "namespace":{
+                  "type" : "string",
+                  "index" : "not_analyzed"
+                }
+            }
+        }
+    }
+}

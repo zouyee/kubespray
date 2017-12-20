@@ -1,0 +1,12 @@
+[Unit]
+Description=jounal to fluent through tcp
+
+[Service]
+Type=simple
+ExecStart=/root/etcd_kubelet_tcp.sh
+ExecReload=/root/etcd_kubelet_tcp.sh
+RestartSec=1
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

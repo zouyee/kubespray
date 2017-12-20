@@ -1,0 +1,10 @@
+[Unit]
+Description=alertmanager daemon which start the alertmanager service in daemon style
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/etc/alertmanager/alertmanager -config.file=/etc/alertmanager/config.yml
+
+[Install]
+WantedBy=multi-user.target

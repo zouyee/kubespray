@@ -1,0 +1,23 @@
+[Unit]
+Description=fluentd for audit
+After=docker.service
+Requires=docker.service
+
+[Service]
+Restart=always
+Environment=FLUENTD_CONF=/etc/fluent/conf/fluentd.conf
+Environment=AUDIT_LOG=/usr/local/openresty/nginx/logs/
+ExecStart=/usr/bin/docker run \
+  --privileged=true \
+  --name=fluentd \
+  --net=host \
+  -v ${FLUENTD_CONF}:/etc/conf/fluent.conf \
+  -v ${AUDIT_LOG}:/usr/local/openresty/nginx/logs/ \
+  -v /etc/localtime:/etc/localtime \
+  k8s-fluentd:v1.0 \
+  -c /etc/conf/fluent.conf
+ExecStartPre=-/usr/bin/docker rm -f fluentd
+ExecReload=/usr/bin/docker restart fluentd
+
+[Install]
+WantedBy=multi-user.target

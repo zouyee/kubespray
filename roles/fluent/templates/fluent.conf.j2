@@ -1,0 +1,126 @@
+<source>
+  @type systemd
+  path /run/log/journal
+  filters [{ "_SYSTEMD_UNIT": "kubelet.service" },{ "_SYSTEMD_UNIT": "etcd.service" }]
+  tag log.kube
+</source>
+<source>
+  @type tail
+  format none
+  path /var/log/containers/*.log
+  tag log.tail.*
+</source>
+
+<source>
+  @type tail
+  format none
+  path /var/log/containers/kube-proxy*.log
+  tag component.proxy
+</source>
+<source>
+  @type tail
+  format none
+  path /var/log/containers/kube-apiserver*.log
+  tag component.apiserver
+</source>
+<source>
+  @type tail
+  format none
+  path /var/log/containers/kube-controller-manager*.log
+  tag component.manager
+</source>
+<source>
+  @type tail
+  format none
+  path /var/log/containers/kube-scheduler*.log
+  tag component.scheduler
+</source>
+
+<filter component.proxy>
+  @type record_transformer
+  enable_ruby
+  <record>
+    file  kube-proxy-k8s-nid_kube-system_kube-proxy-cid
+    host_param "#{Socket.gethostname}"
+    timestamp ${ (Time.now.to_f * 1000).to_i }
+    logtime ${time}
+    cluster cluster-1
+  </record>
+</filter>
+
+<filter component.apiserver>
+  @type record_transformer
+  enable_ruby
+  <record>
+    file  kube-apiserver-k8s-nid_kube-system_kube-proxy-cid
+    host_param "#{Socket.gethostname}"
+    timestamp ${ (Time.now.to_f * 1000).to_i }
+    logtime ${time}
+    cluster cluster-1
+  </record>
+</filter>
+<filter component.manager>
+  @type record_transformer
+  enable_ruby
+  <record>
+    file  kube-controller-manager-k8s-nid_kube-system_kube-proxy-cid
+    host_param "#{Socket.gethostname}"
+    timestamp ${ (Time.now.to_f * 1000).to_i }
+    logtime ${time}
+    cluster cluster-1
+  </record>
+</filter>
+<filter component.scheduler>
+  @type record_transformer
+  enable_ruby
+  <record>
+    file  kube-scheduler-k8s-nid_kube-system_kube-proxy-cid
+    host_param "#{Socket.gethostname}"
+    timestamp ${ (Time.now.to_f * 1000).to_i }
+    logtime ${time}
+    cluster cluster-1
+  </record>
+</filter>
+<filter log.kube>
+  @type record_transformer
+  enable_ruby
+  <record>
+    host_param "#{Socket.gethostname}"
+    timestamp ${ (Time.now.to_f * 1000).to_i }
+    logtime ${time}
+    cluster cluster-1
+  </record>
+</filter>
+
+<filter log.tail.**>
+  @type record_transformer
+  enable_ruby
+  <record>
+    file ${tag_suffix[-2]}
+    host_param "#{Socket.gethostname}"
+    timestamp ${ (Time.now.to_f * 1000).to_i }
+    logtime ${time}
+    cluster cluster-1
+  </record>
+</filter>
+
+
+<match log.kube>
+  @type kafka
+  brokers {% for item in fluent_nodes %}{% if not loop.last %}{{hostvars[item]['ip']}}:{{ kafka_port }},{% else %}{{hostvars[item]['ip']}}:{{ kafka_port }}{{ "\n" }}{% endif %}{% endfor %}
+  default_topic kube_log
+  output_data_type json
+</match>
+
+<match log.tail.**>
+  @type kafka
+  brokers {% for item in fluent_nodes %}{% if not loop.last %}{{hostvars[item]['ip']}}:{{ kafka_port }},{% else %}{{hostvars[item]['ip']}}:{{ kafka_port }}{{ "\n" }}{% endif %}{% endfor %}
+  default_topic kube_app
+  output_data_type json
+</match>
+<match component.*>
+  @type kafka
+  brokers {% for item in fluent_nodes %}{% if not loop.last %}{{hostvars[item]['ip']}}:{{ kafka_port }},{% else %}{{hostvars[item]['ip']}}:{{ kafka_port }}{{ "\n" }}{% endif %}{% endfor %}
+  default_topic kube_app
+  output_data_type json
+</match>

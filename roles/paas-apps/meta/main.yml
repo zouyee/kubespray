@@ -1,0 +1,7 @@
+dependencies:
+ - {role: paas-apps/dashboard, tags: ["apps", "dashboard"]}
+ - {role: paas-apps/data_collection, tags: ["apps", "data-collection"]}
+ - {role: paas-apps/alertmanager, tags: ["apps", "alertmanager"]}
+ - {role: paas-apps/user_management, tags: ["apps", "user"]}
+ - {role: paas-apps/resource-management, tags: ["apps", "resource-management"]}
+ 

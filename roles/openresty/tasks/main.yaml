@@ -1,0 +1,111 @@
+---
+- name: Openresty | ensure openresty dir exists
+  file:
+      path: "{{openresty_dir}}"
+      state: directory
+      mode: 0755
+
+- name: Openresty | copy openresty tar
+  copy:
+      src: "{{ playbook_dir }}/tar/openresty/openresty.tar.gz"
+      dest: "{{openresty_dir}}"
+      mode: 0755
+
+- name: Openresty | ensure fluent dir exists
+  file:
+      path: "{{fluent_dir}}"
+      state: directory
+      mode: 0655
+
+- name: Openresty | ensure fluent config dir exists
+  file:
+      path: "{{fluent_conf_dir}}"
+      state: directory
+      mode: 0655
+
+- name: Openresty | ensure nginx log dir exists
+  file:
+      path: /var/log/nginx
+      state: directory
+      mode: 0644
+
+- name: Openresty | ensure nginx log exists
+  file:
+      path: /var/log/nginx/error.log
+      state: touch
+      mode: 0644
+
+- name: Openresty | unarchive openresty tar
+  shell: "tar -zxvf {{openresty_dir}}/openresty.tar.gz -C {{openresty_dir}}"
+
+- name: Openresty | install openresty
+  shell: "yum localinstall -y  {{openresty_dir}}/openresty/*.rpm"
+#  ignore_errors: yes
+
+- name: Openresty | copy openresty resty
+  copy:
+      src: "{{ playbook_dir }}/tar/openresty/resty"
+      dest: /usr/local/openresty/lualib
+      mode: 0755
+
+- name: Openresty | copy openresty auth lua
+  copy:
+      src: auth.lua
+      dest: /usr/local/openresty/nginx/conf
+      mode: 0755
+
+- name: Openresty | copy k8s ui
+  copy:
+      src: "{{ playbook_dir }}/tar/openresty/k8s"
+      dest: /opt
+      mode: 0755
+
+- name: Openresty | update k8s ui permission
+  shell: "chmod -R 755 /opt/k8s"
+
+- name: Openresty | get token
+  shell: "head -1 {{kube_config_dir}}/tokens/known_tokens.csv | awk -F ',' '{print $1}'"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  register: token_stdout
+
+- name: Openresty | update nginx conf
+  template:
+      src: nginx.conf.j2
+      dest: /usr/local/openresty/nginx/conf/nginx.conf
+      mode: 0644
+
+- name: Openresty | copy fluentd conf
+  template:
+      src: fluentd.conf.j2
+      dest: "{{fluent_conf_dir}}/fluentd.conf"
+      mode: 0644
+#  ignore_errors: yes
+- name: Openresty | copy fluentd service
+  copy:
+      src: fluentd.service
+      dest: /etc/systemd/system
+      mode: 0644
+
+- name: Openresty | enable fluentd service
+  shell: "systemctl enable fluentd"
+
+- name: Openresty | start fluentd service
+  shell: "systemctl start fluentd"
+
+- name: Openresty | gen k8s hosts json
+  template:
+      src: k8s-hosts.json.j2
+      dest: /opt/k8s-hosts.json
+      mode: 0755
+
+- name: Openresty | copy nginx template
+  copy:
+      src: nginx.tmpl
+      dest: /opt
+      mode: 0755
+
+- name: Openresty | enable openresty service
+  shell: "systemctl enable openresty"
+
+- name: Openresty | start openresty service
+  shell: "systemctl start openresty"

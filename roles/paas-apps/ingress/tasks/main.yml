@@ -1,9 +1,16 @@
 ---
 - name: Kubernetes ingress | copy ingress controller image
   copy:
-      src: "{{ playbook_dir }}/tar/paas-apps/ingress/*"
+      src: "{{ playbook_dir }}/tar/paas-apps/ingress/"
       dest: "{{paas_images_dir}}"
       mode: 0755
+  delegate_to: "{{hostvars[groups['ingress'][0]]['ip']}}"
+
+- name: ingress | label ingress node
+  shell: "{{bin_dir}}/kubectl label node --overwrite {{item}} nginx-ingress-controller=true "
+  when: inventory_hostname == groups['kube-master'][0]
+  with_items:
+    - groups['ingress']
 
 - name: Kubernetes ingress | load ingress controller  backend
   command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/defaultbackend_v1.2.tar"
@@ -15,14 +22,14 @@
   command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/nginx-vts-ingress-controller-exporter.tar"
 
 - name: Kubernetes ingress | load ingress controller port image
-  command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/ingress-backend-v1.8.tar"
+  command: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/ingress-backend-v1.9.3.tar"
 
 - name: Kubernetes ingress | get pod host of mysql
   shell: "{{ bin_dir }}/kubectl get pods -n kube-system -owide |awk '/mysql/ {print $7;exit}'"
   register: mysqlpod
   delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
 
-- name: Kubernetes ingress | Write config.json 
+- name: Kubernetes ingress | Write config.json
   template:
       src: config.json.j2
       dest: "{{kube_config_dir}}/config.json"
@@ -75,12 +82,11 @@
   changed_when: False
   failed_when: False
 
-- name: Kubernetes ingress | create sql-config cm 
+- name: Kubernetes ingress | create sql-config cm
   command: "{{ bin_dir }}/kubectl create cm ingress-backend-config --from-file=config={{kube_config_dir}}/config.json -n {{system_namespace}}"
   delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
-  when: sqlconfigcm|failed
+  ignore_errors: true
 
-- name: Kubernetes ingress | create ingress-ports svc  
-  command: "{{ bin_dir }}/kubectl create -f {{kube_config_dir}}/svc_ports.yml"
+- name: Kubernetes ingress | create ingress-ports svc
+  command: "{{ bin_dir }}/kubectl apply -f {{kube_config_dir}}/svc_ports.yml"
   delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
-  when: ingressportssvc|failed

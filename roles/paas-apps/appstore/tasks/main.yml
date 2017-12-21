@@ -170,27 +170,3 @@
     namespace: "{{ system_namespace }}"
   delegate_to: "{{ hostvars[groups['kube-master'][1]]['ip'] }}"
   when: appsvcbackend|failed
-
-# FIXME
-# Next two steps should be merged in auth deployment.
-- name: Appstore | Copy appstore auth json files
-  copy:
-    src: auth-init
-    dest: "{{ appstore_files_dir }}/app-backend"
-    mode: 0755
-
-- name: Appstore | Copy appstore auth sript
-  template:
-    src: app-init.sh.j2
-    dest: "{{ appstore_files_dir }}/app-backend/auth-init/app-init.sh"
-    mode: 0755
-
-- name: Appstore | Init appstore auth
-  command: "bash app-init.sh"
-  args:
-    chdir: "{{appstore_files_dir}}/app-backend/auth-init"
-
-### TODO
-##- name: Appstore | Upload chart images to Harbor
-##  command: ""
-#

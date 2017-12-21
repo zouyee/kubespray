@@ -1,23 +1,26 @@
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  name: fluentd-k8s
+  name: fluentd-base
   namespace: kube-system
 spec:
   template:
     metadata:
       labels:
-        app: fluentd
+        app: fluentd-base
     spec:
       containers:
-      - name: fluentd
-        image: k8s-fluentd:v1.0
+      - image: registry.paas/library/fluentd-base:v0.5
         imagePullPolicy: IfNotPresent
+        name: fluentd-base
+        ports:
+        - containerPort: 80
+          protocol: TCP
         volumeMounts:
-        - name: kube-journal
-          mountPath: /run/log/journal
-        - name: fluent-config
-          mountPath: /etc/fluent/fluent.conf
+        - mountPath: /usr/local/openresty/nginx/logs/
+          name: nginx-log
+        - mountPath: /etc/fluent/
+          name: fluent
         - name: app-log
           mountPath: /dcos/docker/containers
         - name: local-time
@@ -26,13 +29,13 @@ spec:
           mountPath: /var/log/containers
         - name: k8s-pods
           mountPath: /var/log/pods
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
       volumes:
-      - name: kube-journal
-        hostPath:
-          path: /run/log/journal
-      - name: fluent-config
-        hostPath:
-          path: /etc/fluent/conf/fluent.conf
+      - hostPath:
+          path: /usr/local/openresty/nginx/logs/
+        name: nginx-log
       - name: app-log
         hostPath:
           path: /dcos/docker/containers
@@ -45,4 +48,11 @@ spec:
       - name: k8s-pods
         hostPath:
           path: /var/log/pods
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: fluent.conf
+            path: fluent.conf
+          name: baselog-config
+        name: fluent
       hostNetwork: true

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - image: registry.paas/library/fluentd-lb:v0.6
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: fluentd-lb
         ports:
         - containerPort: 80

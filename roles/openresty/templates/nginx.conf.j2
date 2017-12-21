@@ -164,7 +164,29 @@ http {
             proxy_pass http://{{ hostvars[groups['appstore'][0]]['ip'] }}:32136/v1/helm;
         }
 
+        location /loadbalance/ {
+            proxy_set_header Host $http_host;
+            proxy_pass http://{{hostvars[groups['es'][0]]['ip']}}:32006;
+        }
 
+        location /image5558/ {
+            proxy_set_header Host $http_host;
+            proxy_pass http://{{hostvars[groups['es'][0]]['ip']}}:32046/;
+        }
+        location /hpa/{
+            proxy_set_header Host $http_host;
+            proxy_set_header Authorization "Bearer {{token_stdout.stdout}}";
+            proxy_pass https://{{hostvars[groups['kube-master'][0]]['ip']}}:6443/;
+        }
+        location /sublog/ {
+            proxy_set_header Host $http_host;
+            proxy_pass http://{{hostvars[groups['es'][0]]['ip']}}:32098/;
+        }
+
+        location /ds/ {
+            proxy_set_header Host $http_host;
+            proxy_pass http://{{hostvars[groups['es'][0]]['ip']}}:32098/;
+        }
         error_page   500 502 503 504  /50x.html;
         location = /50x.html {
             root   html;

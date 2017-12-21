@@ -11,6 +11,12 @@
     - { role: kargo-defaults }
     - { role: openresty, tags: ["paas-apps", "openresty"] }
 
+- hosts: ingress
+  gather_facts: false
+  roles:
+    - { role: kargo-defaults }
+    - { role: paas-apps/appstore, tags: ["paas-apps", "ingress"] }
+
 - hosts: harbor
   gather_facts: false
   any_errors_fatal: true

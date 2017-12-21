@@ -11,7 +11,7 @@ spec:
         app: ingress-backend
     spec:
       nodeSelector:
-        component: "ingress"
+        nginx-ingress-controller: "true"
       volumes:
       - name: config-volume
         configMap:
@@ -22,7 +22,7 @@ spec:
       containers:
       - name: ingress-backend
         imagePullPolicy: IfNotPresent
-        image: registry.cn-hangzhou.aliyuncs.com/dongqi/ingress-backend:v1.8
+        image: registry.cn-hangzhou.aliyuncs.com/dongqi/ingress-backend:v1.9.3
         ports:
         - containerPort: 32006
           hostPort: 32006

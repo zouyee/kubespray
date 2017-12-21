@@ -2,7 +2,8 @@
 # Valid bootstrap options (required): ubuntu, coreos, centos, none
 bootstrap_os: centos
 kube_api_anonymous_auth: false
-
+# 设置前一个月时间
+current : 2017.11
 ## Change this to use another Kubernetes version, e.g. a current beta release
 kube_version: v1.8.2
 appstore_files_dir: /dcos/appstore

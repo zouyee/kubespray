@@ -20,7 +20,9 @@
 #- name: ELK | install java jdk
 #  shell: "rpm -ivh {{java}}/java/*.rpm"
 #  when:  not java_file
-
+- name: ELK | Get  es node ip
+  set_fact:
+      es_nodes: "{{ groups['es'] }}"
 - name: ELK | ensure es package dir exists
   file:
       path: "{{ es_dir }}"
@@ -60,7 +62,7 @@
 - name: ELK | Write baselog configmap
   template:
       src: baselog_conf.yaml.j2
-      dest: "{{es_dir}}"
+      dest: "{{es_dir}}/baselog_conf.yaml"
       mode: 0644
   when: inventory_hostname == groups['kube-master'][0]
 
@@ -141,6 +143,30 @@
 
 - name: ELK | put k8s-application.json
   shell: "curl -XPUT {{hostvars[groups['es'][0]]['ip']}}:9200/_template/k8s-application -d@{{es_dir}}/application-template.json"
+  register: task_result
+  until: task_result.rc == 0
+  retries: 10
+  delay: 1
+  delegate_to: "{{hostvars[groups['es'][0]]['ip']}}"
+
+- name: ELK | put other
+  shell: "curl -XPOST {{hostvars[groups['es'][0]]['ip']}}:9200/k8s-application-{{current}}"
+  register: task_result
+  until: task_result.rc == 0
+  retries: 10
+  delay: 1
+  delegate_to: "{{hostvars[groups['es'][0]]['ip']}}"
+
+- name: ELK | put ks-app
+  shell: "curl -XPOST {{hostvars[groups['es'][0]]['ip']}}:9200/k8s-kube-{{current}}"
+  register: task_result
+  until: task_result.rc == 0
+  retries: 10
+  delay: 1
+  delegate_to: "{{hostvars[groups['es'][0]]['ip']}}"
+
+- name: ELK | put other
+  shell: "curl -XPOST {{hostvars[groups['es'][0]]['ip']}}:9200/lblog-{{current}}"
   register: task_result
   until: task_result.rc == 0
   retries: 10

@@ -3,8 +3,10 @@
 nat_outgoing: true
 
 # Use IP-over-IP encapsulation across hosts
+# 如果是跨网段，请设置我饿true
 ipip: false
-
+# m
+ipip_mode: always
 # Set to true if you want your calico cni binaries to overwrite the
 # ones from hyperkube while leaving other cni plugins intact.
 overwrite_hyperkube_cni: true

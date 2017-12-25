@@ -63,7 +63,27 @@
 - name: Openresty | update k8s ui permission
   shell: "chmod -R 755 /opt/k8s"
 
-- name: Openresty | get token
+- name: Openresty | get user service ip
+  shell: "head -1 {{kube_config_dir}}/tokens/known_tokens.csv | awk -F ',' '{print $1}'"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  register: token_stdout
+
+- name: Openresty | get web ssh service ip
+  shell: "head -1 {{kube_config_dir}}/tokens/known_tokens.csv | awk -F ',' '{print $1}'"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  register: token_stdout
+
+- name: Openresty | get prometheus service ip
+  shell: "head -1 {{kube_config_dir}}/tokens/known_tokens.csv | awk -F ',' '{print $1}'"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  register: token_stdout
+
+- name: Openresty | get registry service ip
+  shell: "head -1 {{kube_config_dir}}/tokens/known_tokens.csv | awk -F ',' '{print $1}'"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  register: token_stdout
+
+- name: Openresty | get k8s resource ip
   shell: "head -1 {{kube_config_dir}}/tokens/known_tokens.csv | awk -F ',' '{print $1}'"
   delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
   register: token_stdout

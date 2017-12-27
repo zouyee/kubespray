@@ -5,6 +5,11 @@
     state: started
     enabled: yes
 
+- name: remove harbor data dir if it  exist
+  file:
+    path: /data
+    state: absent
+
 - name: Harbor | label flueHarbornt node
   shell: "{{bin_dir}}/kubectl label node {{groups['harbor'][0]}} harbor=true "
   when: inventory_hostname == groups['kube-master'][0]

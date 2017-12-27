@@ -7,55 +7,10 @@
   delegate_to: "{{ hostvars[groups['resource-management'][0]]['ip']}}"
 #  ignore_errors: yes
 
-- name: PaaS resource management | Copy redis container image
-  copy:
-      src: "{{ playbook_dir }}/tar/paas-apps/resource-management/redis.tar"
-      dest: "{{ paas_images_dir}}/redis.tar"
-  delegate_to: "{{ hostvars[groups['resource-management'][0]]['ip']}}"
-
-- name: PaaS resource management | Load redis controller image
-  command: "{{ docker_bin_dir}}/docker load -i {{ paas_images_dir }}/redis.tar"
-  delegate_to: "{{ hostvars[groups['resource-management'][0]]['ip']}}"
-
-- name: PaaS resource management | Copy k8s-resource container image
-  copy:
-      src: "{{ playbook_dir }}/tar/paas-apps/resource-management/k8s-resource.tar"
-      dest: "{{ paas_images_dir}}/k8s-resource.tar"
-  delegate_to: "{{ hostvars[groups['resource-management'][0]]['ip']}}"
-
-- name: PaaS resource management | Load k8s-resource controller image
-  command: "{{ docker_bin_dir}}/docker load -i {{ paas_images_dir }}/k8s-resource.tar"
-  delegate_to: "{{ hostvars[groups['resource-management'][0]]['ip']}}"
-
-- name: PaaS resource management | Copy redis yaml
-  template:
-      src: redis.yml.j2
-      dest: "{{ kube_config_dir}}/redis.yml"
-
 - name: PaaS resource management | Copy k8s-resource yaml
   template:
       src: k8s-resource.yml.j2
       dest: "{{ kube_config_dir}}/k8s-resource.yml"
-
-- name: PaaS resource management | Check if redis svc exists
-  command: "{{ bin_dir }}/kubectl get svc redis -n {{system_namespace}}"
-  register: 'redissvc'
-  changed_when: False
-  failed_when: False
-  
-- name: PaaS resource management | Check if redis deploy exists
-  command: "{{ bin_dir }}/kubectl get deploy redis -n {{system_namespace}}"
-  register: 'redisdeploy'
-  changed_when: False
-  failed_when: False
-
-- name: PaaS resource management | Start redis
-  kube:
-      name: "kube-system"
-      kubectl: "{{bin_dir}}/kubectl"
-      filename: "{{kube_config_dir}}/redis.yml"
-      namespace: "{{system_namespace}}"
-  when: redisdeploy|failed and redissvc|failed 
 
 - name: PaaS resource management | Check if k8s-resource svc exists
   command: "{{ bin_dir }}/kubectl get svc k8s-resource -n {{system_namespace}}"

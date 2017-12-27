@@ -14,7 +14,8 @@
       mode: 0755
 
 - name: Fluent | Copy fluent docker images
-  local_action: "shell rsync -avz -e 'sshpass -p {{ ansible_password }} ssh -p 22 -o StrictHostKeyChecking=no' {{ playbook_dir }}/tar/fluent/k8s-fluentd.tar  {{ ansible_user }}@{{inventory_hostname}}:{{ paas_images_dir }}/k8s-fluentd.tar"
+  local_action: "shell rsync -avz -e 'sshpass -p {{ ansible_password }} ssh -p 22 -o StrictHostKeyChecking=no' {{ playbook_dir }}/tar/fluent/fluentd-lb_v0.6.tar  {{ ansible_user }}@{{inventory_hostname}}:{{ paas_images_dir }}/fluentd-lb_v0.6.tar"
+  when: inventory_hostname in groups['ingress']
 
 #- name: Fluent | Copy fluent docker images
 #  local_action: "shell rsync -avz -e 'sshpass -p {{ ansible_password }} ssh -p 22 -o StrictHostKeyChecking=no' {{ role_path }}/files/k8s-fluentd.tar  {{ ansible_user }}@{{inventory_hostname}}:{{ paas_images_dir }}/k8s-fluentd.tar"
@@ -26,7 +27,7 @@
 #      mode: 0755
 
 - name: Fluent | Load fluent images
-  shell: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/k8s-fluentd.tar"
+  shell: "{{docker_bin_dir}}/docker load -i {{paas_images_dir}}/fluentd-lb_v0.6.tar"
 
 - name: Fluent | Ensure fluent conf file exist
   file:

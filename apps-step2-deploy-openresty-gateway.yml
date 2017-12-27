@@ -1,6 +1,0 @@
----
-- hosts: openresty
-  gather_facts: false
-  roles:
-    - { role: kargo-defaults }
-    - { role: openresty, tags: ["paas-apps", "openresty"] }

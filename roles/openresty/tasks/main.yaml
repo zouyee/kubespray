@@ -68,25 +68,26 @@
   delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
   register: token_stdout
 
-- name: Openresty | get web ssh service ip
-  shell: "head -1 {{kube_config_dir}}/tokens/known_tokens.csv | awk -F ',' '{print $1}'"
+- name: Openresty | get web ssh
+  shell: "{{ bin_dir }}/kubectl get svc -n kube-system web-ssh -o jsonpath="{.spec.clusterIP}""
   delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
-  register: token_stdout
+  register: web-ssh
 
-- name: Openresty | get prometheus service ip
-  shell: "head -1 {{kube_config_dir}}/tokens/known_tokens.csv | awk -F ',' '{print $1}'"
-  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
-  register: token_stdout
 
-- name: Openresty | get registry service ip
-  shell: "head -1 {{kube_config_dir}}/tokens/known_tokens.csv | awk -F ',' '{print $1}'"
+- name: Openresty | get paas-auth
+  shell: "{{ bin_dir }}/kubectl get svc -n kube-system paas-auth -o jsonpath="{.spec.clusterIP}""
   delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
-  register: token_stdout
+  register: paas-auth
 
-- name: Openresty | get k8s resource ip
-  shell: "head -1 {{kube_config_dir}}/tokens/known_tokens.csv | awk -F ',' '{print $1}'"
+- name: Openresty | get  k8s-resource
+  shell: "{{ bin_dir }}/kubectl get svc -n kube-system k8s-resource -o jsonpath="{.spec.clusterIP}""
   delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
-  register: token_stdout
+  register: k8s-resource
+
+- name: Openresty | get app-backend
+  shell: "{{ bin_dir }}/kubectl get svc -n kube-system app-backend -o jsonpath="{.spec.clusterIP}""
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+  register: app-backend
 
 - name: Openresty | update nginx conf
   template:

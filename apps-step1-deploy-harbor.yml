@@ -1,7 +1,0 @@
----
-- hosts: harbor
-  gather_facts: false
-  any_errors_fatal: true
-  roles:
-    - { role: kargo-defaults }
-    - { role: harbor, tags: ["paas-apps", "harbor"] }

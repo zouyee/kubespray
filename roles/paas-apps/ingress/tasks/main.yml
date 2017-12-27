@@ -6,8 +6,20 @@
       mode: 0755
   delegate_to: "{{hostvars[groups['ingress'][0]]['ip']}}"
 
-- name: ingress | label ingress node
+- name: ingress | label ingress node ingress
   shell: "{{bin_dir}}/kubectl label node --overwrite {{item}} nginx-ingress-controller=true "
+  when: inventory_hostname == groups['kube-master'][0]
+  with_items:
+    - groups['ingress']
+
+- name: ingress | label ingress node-ip
+  shell: "{{bin_dir}}/kubectl label node --overwrite {{item}} node-ip={{item.public_ip}} "
+  when: inventory_hostname == groups['kube-master'][0]
+  with_items:
+    - groups['ingress']
+
+- name: ingress | label ingress ingress monitor
+  shell: "{{bin_dir}}/kubectl label node --overwrite {{item}} role=ingress "
   when: inventory_hostname == groups['kube-master'][0]
   with_items:
     - groups['ingress']
@@ -46,6 +58,13 @@
   copy:
     src: default-http-backend.yaml
     dest: "{{kube_config_dir}}/default-http-backend.yaml"
+    mode: 0644
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+
+- name: Kubernetes ingress | copy ports-init
+  copy:
+    src: ports-init.json
+    dest: "/root/ports-init.json"
     mode: 0644
   delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
 
@@ -89,4 +108,13 @@
 
 - name: Kubernetes ingress | create ingress-ports svc
   command: "{{ bin_dir }}/kubectl apply -f {{kube_config_dir}}/svc_ports.yml"
+  delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"
+
+- name: Kubernetes ingress | init post config
+  command: "curl -X POST -d@/root/ports-init.json 127.0.0.1:32001/loadbalance/v1/ports"
+  register: ingress_task_result
+  until: ingress_task_result.rc == 0
+  retries: 4
+  delay: "{{ retry_stagger | random + 3 }}"
+  changed_when: false
   delegate_to: "{{hostvars[groups['kube-master'][0]]['ip']}}"

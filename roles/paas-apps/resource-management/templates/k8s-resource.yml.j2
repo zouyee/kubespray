@@ -13,47 +13,18 @@ spec:
         app: k8s-resource
     spec:
       containers:
-      - image: k8s-resource:v2.0
-        imagePullPolicy: IfNotPresent
+      - image: registry.paas/library/k8s-resource:v2.1
+        imagePullPolicy: Always
         name: k8s-resource
-        command: ["/usr/local/bin/dumb-init", "/usr/bin/k8s_resource"]
-        args:
-          - --mysqldbaddr
-          - {{hostvars[groups['user_management'][0]]['ip']}}:32034
-          - --mysqldbauthkey
-          - root:{{mysql_root_password}}
-          - --listen
-          - 0.0.0.0:9092
-        env:
-        - name: redisaddr
-          value: redis://{{hostvars[groups['resource-management'][0]]['ip']}}:32093/0
         ports:
         - name: k8s-resource
           containerPort: 9092
-        volumeMounts:
-        - name: ssh
-          mountPath: /root
-      volumes:
-      - name: ssh
-        hostPath:
-          path: "/root"
-      nodeSelector:
-        kubernetes.io/hostname: {{groups['resource-management'][0]}}
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: k8s-resource
-  name: k8s-resource
-  namespace: kube-system
-spec:
-  type: NodePort
-  ports:
-  - name: k8s-resource
-    port: 9092
-    protocol: TCP
-    targetPort: 9092
-    nodePort: 32092
-  selector:
-    app: k8s-resource
+        env:
+        - name: DBURL
+          value: {{hostvars[groups['user_management'][0]]['ip']}}:32034
+        - name: DBUSER
+          value: root
+        - name: DBPASSWORD
+          value: {{mysql_root_password}}
+        - name: DBNAME
+          value: k8s_resource
